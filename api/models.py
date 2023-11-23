@@ -1,4 +1,5 @@
 import os
+import uuid
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -7,28 +8,35 @@ from api.manager import UserManager
 # Create your models here.
 
 Role=(
-    ('Girant', 'Girant'),
+    ('Admin','Admin'),
+    ('Gerant', 'Gerant'),
     ('Agent', 'Agent'),
 )  
+def image_uoload_profile_agent(instance,filname):
+    imagename,extention =  filname.split(".")
+    return "agent/%s.%s"%(instance.id,extention)
 
 class UserAub(AbstractBaseUser,PermissionsMixin):
     nom = models.CharField(max_length=50,blank=True)
     prenom = models.CharField(max_length=50,blank=True)
     phone = models.CharField(max_length=16,unique=True)
+    username = models.CharField(max_length=16,unique=True,null=True)
     email = models.EmailField(max_length=50,blank=True)
     address = models.CharField(max_length=200,)
+    post = models.CharField(max_length=200,null=True)
+    image=models.ImageField(upload_to=image_uoload_profile_agent ,null=True,blank=True) 
     is_active = models.BooleanField(default=True)
     verified = models.BooleanField(default=False)
     restricted = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
-    role= models.CharField(max_length=30, choices=Role, default='Girant')
+    role= models.CharField(max_length=30, choices=Role,null=True,default='Gerant')
     is_superuser = models.BooleanField(default=False)
     is_blocked = models.BooleanField(default=False)
     number_attempt= models.IntegerField(default=0)
     objects = UserManager()
 
-    USERNAME_FIELD = 'phone'
+    USERNAME_FIELD = 'username'
 
     REQUIRED_FIELDS = []
 
@@ -40,42 +48,51 @@ class Direction(models.Model):
     code = models.CharField(max_length=100,null=True)
 
     def __str__(self): 
-        return self.nom     
+        return self.code     
 
-def image_uoload_profile_agent(instance,filname):
-    imagename,extention =  filname.split(".")
-    return "agent/%s.%s"%(instance.id,extention)    
+class Archive(models.Model):
+    nom = models.CharField(max_length=100, null=True)
+    date_ajout = models.DateTimeField(auto_now=True,null=True)
+    def __str__(self):
+        return self.nom  
 
 class Agent(UserAub):
-    image=models.ImageField(upload_to=image_uoload_profile_agent ,null=True)
-    direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True)    
+    direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True) 
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
     def __str__(self): 
         return self.phone 
         
 #--------Girant -----------
-def image_uoload_profile_girant(instance,filname):
-    imagename,extention =  filname.split(".")
-    return "girant/%s.%s"%(instance.id,extention)
-
-class Girant(UserAub):
-    image=models.ImageField(upload_to=image_uoload_profile_girant ,null=True) 
+class Gerant(UserAub):
+    direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True) 
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
     def __str__(self): 
         return self.phone 
+#-------Admin------------- 
+class Admin(UserAub):
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
+    def __str__(self): 
+        return self.phone     
     
-# def uoload_document(instance,filname):
-#     imagename,extention =  filname.split(".")
-#     return "document/%s.%s"%(instance.id,extention)
+
+    
 def uoload_document(instance, filname):
     extention = os.path.splitext(filname)[1]
     unique_filename = f"{instance.id}{extention}"
-    return os.path.join("girant", unique_filename)   
+    return os.path.join("gerant", unique_filename)  
  
+def generate_unique_code():
+    return str(uuid.uuid4().hex[:6].upper()) 
 class Documents(models.Model):
     sujet = models.CharField(max_length=100,null=True)
-    code = models.CharField(max_length=100,null=True)
+    code = models.CharField(max_length=100,null=True ,default=generate_unique_code,editable=False)
     description = models.TextField(max_length=400,null=True)
     file = models.FileField(upload_to =uoload_document,null=True)
-    agent = models.ForeignKey(Agent, on_delete=models.CASCADE)
+    admin = models.ForeignKey(Admin, on_delete=models.CASCADE,null=True)
+    direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True)
+    date_ajout = models.DateTimeField(auto_now=True,null=True)
+    archives = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True)
+
     def __str__(self):
         return self.sujet    
     
