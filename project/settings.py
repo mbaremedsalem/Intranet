@@ -29,6 +29,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+X_FRAME_OPTIONS = 'DENY'  # ou 'SAMEORIGIN' pour limiter aux mêmes origines
+X_FRAME_OPTIONS = 'ALLOWALL'
 
 # Application definition
 
@@ -93,6 +95,16 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',
+#         'USER': 'mbare',
+#         'PASSWORD': '46981937',
+#         'HOST': 'db',
+#         'PORT': 5432
+#     }
+# }
 
 
 # Password validation

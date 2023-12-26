@@ -41,7 +41,7 @@ class UserAub(AbstractBaseUser,PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self): 
-        return self.nom 
+        return self.username 
     
 class Direction(models.Model):
     nom = models.CharField(max_length=100,null=True)
@@ -59,15 +59,16 @@ class Archive(models.Model):
 class Agent(UserAub):
     direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True) 
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
+
     def __str__(self): 
-        return self.phone 
+        return self.username 
         
 #--------Girant -----------
 class Gerant(UserAub):
     direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True) 
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
     def __str__(self): 
-        return self.phone 
+        return self.username 
 #-------Admin------------- 
 class Admin(UserAub):
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
@@ -92,7 +93,30 @@ class Documents(models.Model):
     direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True)
     date_ajout = models.DateTimeField(auto_now=True,null=True)
     archives = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True)
-
     def __str__(self):
-        return self.sujet    
+        return self.sujet 
     
+def uoload_document_avis(instance, filname):
+    extention = os.path.splitext(filname)[1]
+    unique_filename = f"{instance.id}{extention}"
+    return os.path.join("avis", unique_filename)   
+    
+class Avis(models.Model):
+    titre = models.CharField(max_length=200,null=True)
+    description = models.CharField(max_length=500,null=True)
+    admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
+    user = models.ManyToManyField(UserAub, related_name='avis_users')
+    date = models.DateTimeField(auto_now=True,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True)
+    def __str__(self):
+            return self.titre 
+
+class procedur(models.Model):
+    titre = models.CharField(max_length=200,null=True)
+    description = models.CharField(max_length=400,null=True)
+    admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
+    user = models.ManyToManyField(UserAub, related_name='procedure_users')
+    date = models.DateTimeField(auto_now=True,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True)
+    def __str__(self):
+            return self.titre 

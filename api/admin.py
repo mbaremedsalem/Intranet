@@ -121,6 +121,25 @@ class DirectionConf(admin.ModelAdmin):
          ),
     ) 
 
+class ArchiveConf(admin.ModelAdmin):
+    model = Archive
+    search_fields = ('nom','date_ajout')
+    list_filter = ('nom','date_ajout')
+    ordering = ('nom',)  # Update the ordering field here
+    list_display = ('nom','date_ajout')
+    fieldsets = (
+        (None, {'fields': ('nom','date_ajout')}),
+        
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('nom','date_ajout')
+            }
+         ),
+    ) 
+
            
 
 admin.site.register(UserAub, UserAdminConfig)
@@ -130,5 +149,7 @@ admin.site.register(Admin, UserAdmin)
 admin.site.register(Documents,DocumentConf)
 admin.site.register(Direction,DirectionConf)
 admin.site.register(Archive)
+admin.site.register(Avis)
+admin.site.register(procedur)
 
 

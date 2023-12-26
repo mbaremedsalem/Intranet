@@ -51,7 +51,7 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gerant
-        fields = ('nom', 'role','image','post','phone', 'prenom','email','address','password')
+        fields = ('nom', 'role','image','post','phone','username','prenom','email','address','password')
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -66,7 +66,9 @@ def create(self, validated_data):
         prenom=validated_data['prenom'],
         email=validated_data['email'],
         address=validated_data['address'],
-        password=validated_data['password']
+        password=validated_data['password'],
+        username=validated_data['username']
+        
     )
 
     return user       
@@ -74,7 +76,7 @@ def create(self, validated_data):
 class AgentRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agent
-        fields = ('nom', 'role','image','post','phone', 'prenom','email','address','password')
+        fields = ('nom', 'role','image','post','phone','username','prenom','email','address','password')
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -97,7 +99,7 @@ def create(self, validated_data):
 class RegisterAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = Admin
-        fields =  ('nom', 'role','image','post','phone', 'prenom','email','address','password')
+        fields =  ('nom', 'role','image','post','username','phone', 'prenom','email','address','password')
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -172,3 +174,48 @@ class ArchiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Archive
         fields = ['id','nom', 'date_ajout', 'documents'] 
+#avis serializer 
+
+
+# class AvisSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Avis
+#         fields = ['id', 'titre', 'description', 'file','admin', 'user']  
+
+class AvisSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = Avis
+        fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None 
+
+class ProcedureSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = procedur
+        fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None        

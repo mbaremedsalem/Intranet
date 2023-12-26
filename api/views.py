@@ -1,3 +1,6 @@
+from PyPDF2 import PdfFileMerger
+from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render
 from rest_framework.exceptions import ValidationError,APIException
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -169,8 +172,9 @@ class getAllDocuments(APIView):
         # Récupérez tous les documents
         documents = Documents.objects.all()
         serializer = DocumentsSerializer(documents, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)        
-    
+        return Response(serializer.data, status=status.HTTP_200_OK,content_type='application/pdf')        
+
+
 #------------------delete document by id ----------------#
 class deletedocumentDocuments(APIView):
     permission_classes = [IsAuthenticated]
@@ -457,3 +461,129 @@ class DocumentInArchiveView(generics.ListAPIView):
     def get_queryset(self):
         archive_id = self.kwargs['archive_id']
         return Documents.objects.filter(archives__id=archive_id)
+
+
+# create avis en specifiant les user qui peux le voire 
+class AvisCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'Admin':
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        users_ids = data.get('users', [])
+
+        for user_id in users_ids:
+            try:
+                user = UserAub.objects.get(id=user_id)
+                if user.role not in ['Gerant', 'Agent']:
+                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
+            except UserAub.DoesNotExist:
+                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = AvisSerializer(data=data)
+        if serializer.is_valid():
+            avis = serializer.save()
+            for user_id in users_ids:
+                user = UserAub.objects.get(id=user_id)
+                avis.users.add(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+#les avis d'un utilisateur     
+class AvisByUserAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        if request.user.role not in ['Gerant', 'Agent']:
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            user = UserAub.objects.get(id=user_id)
+        except UserAub.DoesNotExist:
+            return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
+
+        avis = Avis.objects.filter(user=user)
+
+        serializer = AvisSerializer(avis, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)  
+    
+#list des documents par meme admin 
+class AvisByAdminAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, admin_id):
+        # Récupérez tous les avis associés à l'administrateur donné
+        avis = Avis.objects.filter(admin__id=admin_id)
+        
+        # Sérialisez les avis
+        serializer = AvisSerializer(avis, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)        
+    
+#-----------delete avis-------
+class deleteAvis(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self,request, avis_id):
+        # Code pour supprimer un document par son ID
+        
+        try:
+            avis = Avis.objects.get(id=avis_id)
+            avis.delete()
+            return Response({'detail': 'Avis deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Gerant.DoesNotExist:
+            return Response({'detail': 'Avis not found'}, status=status.HTTP_404_NOT_FOUND)   
+        
+# create avis en specifiant les user qui peux le voire 
+class ProcedureCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'Admin':
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        users_ids = data.get('users', [])
+
+        for user_id in users_ids:
+            try:
+                user = UserAub.objects.get(id=user_id)
+                if user.role not in ['Gerant', 'Agent']:
+                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
+            except UserAub.DoesNotExist:
+                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ProcedureSerializer(data=data)
+        if serializer.is_valid():
+            avis = serializer.save()
+            for user_id in users_ids:
+                user = UserAub.objects.get(id=user_id)
+                avis.users.add(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
+#les avis d'un utilisateur     
+class ProcedureByUserAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        if request.user.role not in ['Gerant', 'Agent']:
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = UserAub.objects.get(id=user_id)
+        except UserAub.DoesNotExist:
+            return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
+        avis = procedur.objects.filter(user=user)
+        serializer = ProcedureSerializer(avis, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    
+#list des procedures par meme admin 
+class ProcedureByAdminAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, admin_id):
+        # Récupérez tous les avis associés à l'administrateur donné
+        proc = procedur.objects.filter(admin__id=admin_id)
+        # Sérialisez les avis
+        serializer = ProcedureSerializer(proc, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)      

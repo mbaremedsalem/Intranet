@@ -55,4 +55,21 @@ urlpatterns = [
     path('archives/<int:archive_id>/add_document/', AddDocumentToArchiveView.as_view(), name='add-document-to-archive'),
     # --------------------- get document in archive  -------------------
     path('archives/<int:archive_id>/documents/', DocumentInArchiveView.as_view(), name='documents-in-archive'),
+    #----------- avis ---------
+    # --------- create avis -------
+    path('create-avis/', AvisCreateAPI.as_view(), name='avis-posted'),
+    #------- get avis user agent ou gerant -----
+    path('avis/user/<int:user_id>/', AvisByUserAPI.as_view(), name='avis-get-user'),
+    #------- get avis user admin-----
+    path('avis-by-admin/<int:admin_id>/', AvisByAdminAPI.as_view(), name='avis-by-admin'),
+    #------ delet avis by id --------
+    path('delete-avis/<int:avis_id>/', deleteAvis.as_view(), name='delete-avis-by-id'),
+    #------- create procedure -------- 
+    path('create-procedure/', ProcedureCreateAPI.as_view(), name='avis-posted'),
+    #------- get avis user agent ou gerant -----
+    path('avis/user/<int:user_id>/', AvisByUserAPI.as_view(), name='avis-get-user'),
+    # get procedure by admin
+    path('procedure-by-admin/<int:admin_id>/', ProcedureByAdminAPI.as_view(), name='procedure-by-admin'),
+
+     
 ]
