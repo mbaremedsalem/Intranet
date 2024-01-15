@@ -218,4 +218,80 @@ class ProcedureSerializer(serializers.ModelSerializer):
 
     def get_admin_image(self, obj):
             # Récupérez le chemin de l'image de l'administrateur
-            return obj.admin.image.url if obj.admin.image else None        
+            return obj.admin.image.url if obj.admin.image else None  
+
+class NoteSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = note
+        fields = ['id', 'titre', 'description','code','file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None  
+    
+class PolitiqueSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = plotique
+        fields = ['id', 'titre', 'description','code','file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None      
+    
+class DecisionSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = decision
+        fields = ['id', 'titre', 'description','code','file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None      
+
+class chartSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = charts
+        fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None                    

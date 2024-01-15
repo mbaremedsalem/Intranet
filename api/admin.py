@@ -151,5 +151,8 @@ admin.site.register(Direction,DirectionConf)
 admin.site.register(Archive)
 admin.site.register(Avis)
 admin.site.register(procedur)
+admin.site.register(note)
+admin.site.register(decision)
+
 
 

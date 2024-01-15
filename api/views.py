@@ -1,4 +1,4 @@
-from PyPDF2 import PdfFileMerger
+
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -167,13 +167,11 @@ class DocumentsCreateAPI(APIView):
 #-------------------get all document ---------------#
 class getAllDocuments(APIView):
     permission_classes = [IsAuthenticated]
-
     def get(self, request):
         # Récupérez tous les documents
         documents = Documents.objects.all()
         serializer = DocumentsSerializer(documents, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK,content_type='application/pdf')        
-
 
 #------------------delete document by id ----------------#
 class deletedocumentDocuments(APIView):
@@ -587,3 +585,312 @@ class ProcedureByAdminAPI(APIView):
         # Sérialisez les avis
         serializer = ProcedureSerializer(proc, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)      
+    
+#----------- delete procedure -------
+class deleteProcedure(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self,request, procedure_id):
+        # Code pour supprimer un document par son ID
+        
+        try:
+            pro = procedur.objects.get(id=procedure_id)
+            pro.delete()
+            return Response({'detail': 'Procedure deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Gerant.DoesNotExist:
+            return Response({'detail': 'Procedure not found'}, status=status.HTTP_404_NOT_FOUND) 
+
+# ----------- view note ----------------
+#-------------------get all document ---------------#
+class getAllNotes(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        # Récupérez tous les documents
+        notes = note.objects.all()
+        serializer = NoteSerializer(notes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK,content_type='application/pdf')   
+           
+# ----------create note --------
+class NoteCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'Admin':
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        users_ids = data.get('users', [])
+
+        for user_id in users_ids:
+            try:
+                user = UserAub.objects.get(id=user_id)
+                if user.role not in ['Gerant', 'Agent']:
+                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
+            except UserAub.DoesNotExist:
+                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = NoteSerializer(data=data)
+        if serializer.is_valid():
+            avis = serializer.save()
+            for user_id in users_ids:
+                user = UserAub.objects.get(id=user_id)
+                avis.users.add(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
+#les note d'un utilisateur     
+class NoteByUserAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        if request.user.role not in ['Gerant', 'Agent']:
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = UserAub.objects.get(id=user_id)
+        except UserAub.DoesNotExist:
+            return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
+        avis = procedur.objects.filter(user=user)
+        serializer = NoteSerializer(avis, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    
+#list des note par meme admin 
+class NoteByAdminAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, admin_id):
+        # Récupérez tous les avis associés à l'administrateur donné
+        Note = note.objects.filter(admin__id=admin_id)
+        # Sérialisez les avis
+        serializer = NoteSerializer(Note, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)      
+    
+#----------- delete note -------
+class deleteNote(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self,request, note_id):
+        # Code pour supprimer un document par son ID
+        
+        try:
+            Note = note.objects.get(id=note_id)
+            Note.delete()
+            return Response({'detail': 'Note deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Gerant.DoesNotExist:
+            return Response({'detail': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+# ----------- decision -----------------
+#-------------------get all document ---------------#
+class getAllDecision(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        # Récupérez tous les documents
+        Decision = decision.objects.all()
+        serializer = DecisionSerializer(Decision, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK,content_type='application/pdf')          
+# ----------create note --------
+class DecisionCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'Admin':
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        users_ids = data.get('users', [])
+
+        for user_id in users_ids:
+            try:
+                user = UserAub.objects.get(id=user_id)
+                if user.role not in ['Gerant', 'Agent']:
+                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
+            except UserAub.DoesNotExist:
+                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = DecisionSerializer(data=data)
+        if serializer.is_valid():
+            avis = serializer.save()
+            for user_id in users_ids:
+                user = UserAub.objects.get(id=user_id)
+                avis.users.add(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
+#les note d'un utilisateur     
+class DecisionByUserAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        if request.user.role not in ['Gerant', 'Agent']:
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = UserAub.objects.get(id=user_id)
+        except UserAub.DoesNotExist:
+            return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
+        avis = decision.objects.filter(user=user)
+        serializer = DecisionSerializer(avis, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    
+#list des note par meme admin 
+class DecisionByAdminAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, admin_id):
+        # Récupérez tous les avis associés à l'administrateur donné
+        Note = decision.objects.filter(admin__id=admin_id)
+        # Sérialisez les avis
+        serializer = DecisionSerializer(Note, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)      
+    
+#----------- delete note -------
+class deleteDecision(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self,request, decision_id):
+        # Code pour supprimer un document par son ID
+        
+        try:
+            Decision = decision.objects.get(id=decision_id)
+            Decision.delete()
+            return Response({'detail': 'decision deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Gerant.DoesNotExist:
+            return Response({'detail': 'decision not found'}, status=status.HTTP_404_NOT_FOUND)    
+             
+# ----------- view charts ----------------
+class ChartsCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'Admin':
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        users_ids = data.get('users', [])
+
+        for user_id in users_ids:
+            try:
+                user = UserAub.objects.get(id=user_id)
+                if user.role not in ['Gerant', 'Agent']:
+                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
+            except UserAub.DoesNotExist:
+                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = chartSerializer(data=data)
+        if serializer.is_valid():
+            avis = serializer.save()
+            for user_id in users_ids:
+                user = UserAub.objects.get(id=user_id)
+                avis.users.add(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
+#les charts d'un utilisateur     
+class ChartsByUserAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        if request.user.role not in ['Gerant', 'Agent']:
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = UserAub.objects.get(id=user_id)
+        except UserAub.DoesNotExist:
+            return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
+        avis = procedur.objects.filter(user=user)
+        serializer = chartSerializer(avis, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    
+#list des charts par meme admin 
+class ChartsByAdminAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, admin_id):
+        # Récupérez tous les avis associés à l'administrateur donné
+        proc = note.objects.filter(admin__id=admin_id)
+        # Sérialisez les avis
+        serializer = chartSerializer(proc, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)      
+    
+#----------- delete procedure -------
+class deletecharts(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self,request, chart_id):
+        # Code pour supprimer un document par son ID
+        
+        try:
+            pro = charts.objects.get(id=chart_id)
+            pro.delete()
+            return Response({'detail': 'Charts deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Gerant.DoesNotExist:
+            return Response({'detail': 'Charts not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+#-------------------get all document ---------------#
+class getAllplotique(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        # Récupérez tous les documents
+        politiques = plotique.objects.all()
+        serializer = PolitiqueSerializer(politiques, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK,content_type='application/pdf')   
+           
+# ----------create note --------
+class plotiqueCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'Admin':
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        users_ids = data.get('users', [])
+
+        for user_id in users_ids:
+            try:
+                user = UserAub.objects.get(id=user_id)
+                if user.role not in ['Gerant', 'Agent']:
+                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
+            except UserAub.DoesNotExist:
+                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = PolitiqueSerializer(data=data)
+        if serializer.is_valid():
+            avis = serializer.save()
+            for user_id in users_ids:
+                user = UserAub.objects.get(id=user_id)
+                avis.users.add(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
+#les note d'un utilisateur     
+class PolitiqueByUserAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        if request.user.role not in ['Gerant', 'Agent']:
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = UserAub.objects.get(id=user_id)
+        except UserAub.DoesNotExist:
+            return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
+        avis = plotique.objects.filter(user=user)
+        serializer = PolitiqueSerializer(avis, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    
+#list des politique des banques
+class PlotiqueByAdminAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, admin_id):
+        # Récupérez tous les avis associés à l'administrateur donné
+        politiques = plotique.objects.filter(admin__id=admin_id)
+        # Sérialisez les avis
+        serializer = PolitiqueSerializer(politiques, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)      
+    
+#----------- delete note -------
+class deletePlotique(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self,request, plotique_id):
+        # Code pour supprimer un document par son ID
+        try:
+            Poli = plotique.objects.get(id=plotique_id)
+            Poli.delete()
+            return Response({'detail': 'plotique deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Gerant.DoesNotExist:
+            return Response({'detail': 'plotique not found'}, status=status.HTTP_404_NOT_FOUND)        

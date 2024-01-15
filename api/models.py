@@ -41,7 +41,7 @@ class UserAub(AbstractBaseUser,PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self): 
-        return self.username 
+        return self.username or "N/A"
     
 class Direction(models.Model):
     nom = models.CharField(max_length=100,null=True)
@@ -73,7 +73,7 @@ class Gerant(UserAub):
 class Admin(UserAub):
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
     def __str__(self): 
-        return self.phone     
+        return self.phone or "N/A"    
     
 
     
@@ -120,3 +120,61 @@ class procedur(models.Model):
     file = models.FileField(upload_to =uoload_document,null=True)
     def __str__(self):
             return self.titre 
+    
+def generate_unique_note_code():
+    return str(uuid.uuid4().hex[:6].upper())    
+class note(models.Model):
+    titre = models.CharField(max_length=200,null=True)
+    description = models.CharField(max_length=400,null=True)
+    admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
+    user = models.ManyToManyField(UserAub, related_name='notes_users')
+    code = models.CharField(max_length=100,null=True ,default=generate_unique_note_code,editable=False)
+    date = models.DateTimeField(auto_now=True,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True)
+    def __str__(self):
+        return str(self.titre) if self.titre else "Titre par défaut"
+    
+def generate_unique_decision_code():
+    return str(uuid.uuid4().hex[:6].upper())    
+class decision(models.Model):
+    titre = models.CharField(max_length=200,null=True)
+    description = models.CharField(max_length=400,null=True)
+    admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
+    user = models.ManyToManyField(UserAub, related_name='decision_users')
+    code = models.CharField(max_length=100,null=True ,default=generate_unique_decision_code,editable=False)
+    date = models.DateTimeField(auto_now=True,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True)
+    def __str__(self):
+        return str(self.titre) if self.titre else "Titre par défaut"    
+
+class charts(models.Model):
+    titre = models.CharField(max_length=200,null=True)
+    description = models.CharField(max_length=400,null=True)
+    admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
+    user = models.ManyToManyField(UserAub, related_name='chartes_users')
+    date = models.DateTimeField(auto_now=True,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True)
+    def __str__(self):
+        return self.titre or "Titre par défaut"
+
+class TextGouvernance(models.Model):
+    titre = models.CharField(max_length=200,null=True)
+    description = models.CharField(max_length=400,null=True)
+    admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
+    user = models.ManyToManyField(UserAub, related_name='gouvernance_users')
+    date = models.DateTimeField(auto_now=True,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True)
+    def __str__(self):
+            return self.titre     
+def generate_unique_plotique_code():
+    return str(uuid.uuid4().hex[:6].upper()) 
+class plotique(models.Model):
+    titre = models.CharField(max_length=200,null=True)
+    description = models.CharField(max_length=400,null=True)
+    code = models.CharField(max_length=100,null=True ,default=generate_unique_plotique_code,editable=False)
+    admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
+    user = models.ManyToManyField(UserAub, related_name='plotique_users')
+    date = models.DateTimeField(auto_now=True,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True)
+    def __str__(self):
+            return self.titre             
