@@ -69,6 +69,7 @@ class Gerant(UserAub):
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
     def __str__(self): 
         return self.username 
+    
 #-------Admin------------- 
 class Admin(UserAub):
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 

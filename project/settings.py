@@ -58,7 +58,8 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",  # Add your Angular app's origin
+    "http://localhost:4200", 
+    # Add your Angular app's origin
     # You can add more origins as needed
 ]
 
