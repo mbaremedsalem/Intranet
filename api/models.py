@@ -19,7 +19,7 @@ def image_uoload_profile_agent(instance,filname):
 class UserAub(AbstractBaseUser,PermissionsMixin):
     nom = models.CharField(max_length=50,blank=True)
     prenom = models.CharField(max_length=50,blank=True)
-    phone = models.CharField(max_length=16,unique=True)
+    phone = models.CharField(max_length=16)
     username = models.CharField(max_length=16,unique=True,null=True)
     email = models.EmailField(max_length=50,blank=True)
     address = models.CharField(max_length=200,)
@@ -41,7 +41,7 @@ class UserAub(AbstractBaseUser,PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self): 
-        return self.username or "N/A"
+        return self.nom or "N/A"
     
 class Direction(models.Model):
     nom = models.CharField(max_length=100,null=True)
@@ -61,20 +61,20 @@ class Agent(UserAub):
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
 
     def __str__(self): 
-        return self.username 
+        return self.nom 
         
 #--------Girant -----------
 class Gerant(UserAub):
     direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True) 
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
     def __str__(self): 
-        return self.username 
+        return self.nom 
     
 #-------Admin------------- 
 class Admin(UserAub):
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
     def __str__(self): 
-        return self.phone or "N/A"    
+        return self.nom or "N/A"    
     
 
     

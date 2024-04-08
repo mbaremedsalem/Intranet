@@ -1,5 +1,9 @@
 from django.contrib import admin
+from django.contrib.auth.hashers import make_password
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
 from .models import *
+
 # Register your models here.
 
 admin.site.site_header = "Intranet"
@@ -24,25 +28,45 @@ class UserAdminConfig(admin.ModelAdmin):
          ),
     )
 
-class UserAdmin(admin.ModelAdmin):
+
+class AdminResource(resources.ModelResource):
+    class Meta:
+        model = Admin
+        fields = ('email', 'nom', 'prenom', 'post', 'direction', 'phone', 'username', 'password', 'role','is_active', 'is_staff', 'is_blocked')
+        import_id_fields = []  # Ignorer le champ "id" lors de l'importation
+
+    def before_export(self, queryset, *args, **kwargs):
+        # Hasher le mot de passe de chaque objet avant l'exportation
+        for obj in queryset:
+            if obj.password:
+                obj.password = make_password(obj.password)
+
+
+class UserAdmin(ImportExportModelAdmin):
     model = Admin
-    search_fields = ('email', 'nom','post','phone','prenom','username')
-    list_filter = ('email', 'nom', 'phone','post','username','is_active', 'is_staff')
-    ordering = ('nom',)  # Update the ordering field here
-    list_display = ('phone','prenom','email','post','nom','username','is_superuser',
+    resource_class = AdminResource
+    search_fields = ('email', 'nom', 'post', 'phone', 'prenom', 'username')
+    list_filter = ('email', 'nom', 'phone', 'post', 'username', 'is_active', 'is_staff')
+    ordering = ('nom',)  
+    list_display = ('phone', 'prenom', 'email', 'post', 'nom', 'username', 'is_superuser',
                     'is_active', 'is_staff', 'is_blocked', 'password',)
     fieldsets = (
-        (None, {'fields': ('email', 'nom', 'post','phone','username','image','role','prenom')}),
+        (None, {'fields': ('email', 'nom', 'post', 'phone', 'username', 'image', 'role', 'prenom', 'password')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_blocked')}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'nom', 'prenom','post','direction','phone','username','is_active', 'is_staff', 'is_blocked')
-            }
-         ),
+            'fields': ('email', 'nom', 'prenom', 'post', 'direction', 'phone', 'username', 'password', 'is_active', 'is_staff', 'is_blocked')
+        }),
     )
+
+    def save_model(self, request, obj, form, change):
+        # Hasher le mot de passe uniquement s'il est présent et qu'il a été modifié
+        if obj.password:
+            obj.password = make_password(obj.password)
+        super().save_model(request, obj, form, change)
 
 class UserGirant(admin.ModelAdmin):
     model = Gerant
@@ -148,7 +172,7 @@ admin.site.register(Gerant, UserGirant)
 admin.site.register(Admin, UserAdmin)
 admin.site.register(Documents,DocumentConf)
 admin.site.register(Direction,DirectionConf)
-admin.site.register(Archive)
+# admin.site.register(Archive)
 admin.site.register(Avis)
 admin.site.register(procedur)
 admin.site.register(note)

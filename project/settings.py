@@ -35,6 +35,8 @@ X_FRAME_OPTIONS = 'ALLOWALL'
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'import_export',
     'api',
     'corsheaders',
 ]
@@ -207,4 +210,15 @@ SIMPLE_JWT = {
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
+}
+
+JAZZMIN_SETTINGS = {
+    # "site_title": "MovieX",
+    "site_header": "Intranet",
+    "site_brand": "Intranet Made Easy...",
+    # "site_logo": "images/logo.jpg",
+    "copyright": "Intranet - All RIght Reserverd © Copyright 2024",
+    # "order_with_respect_to": ["core", 'userauths', "transactions" , 'addon', 'blog']
+
+    
 }
