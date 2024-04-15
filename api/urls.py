@@ -119,10 +119,10 @@ urlpatterns = [
     # get chart by admin
     path('chart-by-admin/<int:admin_id>/', ChartsByAdminAPI.as_view(), name='chart-by-admin'),
     # delete chart 
-    path('delete-chart/<int:procedure_id>/', deletecharts.as_view(), name='delete-chart-by-id'),
+    path('delete-chart/<int:chart_id>/', deletecharts.as_view(), name='delete-chart-by-id'),
 
 
-    # -------- plotique -----------
+    # -------- poltique -----------
     #------- create plotique -------- 
     path('create-plotique/', plotiqueCreateAPI.as_view(), name='plotique-posted'),
     #------- get avis user agent ou gerant -----

@@ -121,7 +121,7 @@ class DocumentConf(admin.ModelAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('sujet','description','file','direction','date_ajout')
+            'fields': ('sujet','description','file','direction','date_ajout','user')
             }
          ),
     )
@@ -177,6 +177,11 @@ admin.site.register(Avis)
 admin.site.register(procedur)
 admin.site.register(note)
 admin.site.register(decision)
+admin.site.register(charts)
+admin.site.register(plotique)
+
+
+
 
 
 

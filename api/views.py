@@ -462,6 +462,40 @@ class DocumentInArchiveView(generics.ListAPIView):
 
 
 # create avis en specifiant les user qui peux le voire 
+# class AvisCreateAPI(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         if request.user.role != 'Admin':
+#             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+#         data = request.data
+#         users_ids = data.get('users', [])
+
+#         if not users_ids:  # Si aucun utilisateur n'est spécifié ou si une liste vide est passée
+#             agents = UserAub.objects.filter(role='Agent')
+#             users_ids = [agent.id for agent in agents]
+
+#         for user_id in users_ids:
+#             try:
+#                 user = UserAub.objects.get(id=user_id)
+#                 if user.role not in ['Gerant', 'Agent']:
+#                     return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
+#             except UserAub.DoesNotExist:
+#                 return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         serializer = AvisSerializer(data=data)
+#         if serializer.is_valid():
+#             avis = serializer.save()
+
+#             for user_id in users_ids:
+#                 user = UserAub.objects.get(id=user_id)
+#                 avis.user.add(user)  # Utilisation du champ ManyToMany 'user'
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
 class AvisCreateAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -470,24 +504,37 @@ class AvisCreateAPI(APIView):
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data
-        users_ids = data.get('users', [])
+        users_ids = data.getlist('user', [])  # Récupère une liste des valeurs du champ 'user', ou une liste vide si aucune valeur n'est trouvée
 
-        for user_id in users_ids:
-            try:
-                user = UserAub.objects.get(id=user_id)
-                if user.role not in ['Gerant', 'Agent']:
-                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
-            except UserAub.DoesNotExist:
-                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+        # Vérifie si le corps de la demande contient une liste d'utilisateurs
+        if users_ids:
+            invalid_users = []
+            for user_id in users_ids:
+                try:
+                    user = UserAub.objects.get(id=user_id)
+                    if user.role not in ['Gerant', 'Agent']:
+                        invalid_users.append(user_id)
+                except UserAub.DoesNotExist:
+                    invalid_users.append(user_id)
+            
+            if invalid_users:
+                errors = [{"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"} for user_id in invalid_users]
+                return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            agents = UserAub.objects.filter(role='Agent')
+            users_ids = [agent.id for agent in agents]
+            data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
 
+        # Le reste du code reste inchangé
         serializer = AvisSerializer(data=data)
         if serializer.is_valid():
             avis = serializer.save()
             for user_id in users_ids:
                 user = UserAub.objects.get(id=user_id)
-                avis.users.add(user)
+                avis.user.add(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 #les avis d'un utilisateur     
 class AvisByUserAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -515,7 +562,7 @@ class AvisByAdminAPI(APIView):
         avis = Avis.objects.filter(admin__id=admin_id)
         
         # Sérialisez les avis
-        serializer = AvisSerializer(avis, many=True)
+        serializer = AvisSerializer1(avis, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)        
     
@@ -618,25 +665,39 @@ class NoteCreateAPI(APIView):
         if request.user.role != 'Admin':
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
-        data = request.data
-        users_ids = data.get('users', [])
 
-        for user_id in users_ids:
-            try:
-                user = UserAub.objects.get(id=user_id)
-                if user.role not in ['Gerant', 'Agent']:
-                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
-            except UserAub.DoesNotExist:
-                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.copy()  # Crée une copie mutable des données de la requête
 
+        users_ids = data.getlist('user', [])  # Récupère une liste des valeurs du champ 'user', ou une liste vide si aucune valeur n'est trouvée
+
+        # Vérifie si le corps de la demande contient une liste d'utilisateurs
+        if users_ids:
+            invalid_users = []
+            for user_id in users_ids:
+                try:
+                    user = UserAub.objects.get(id=user_id)
+                    if user.role not in ['Gerant', 'Agent']:
+                        invalid_users.append(user_id)
+                except UserAub.DoesNotExist:
+                    invalid_users.append(user_id)
+            
+            if invalid_users:
+                errors = [{"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"} for user_id in invalid_users]
+                return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            agents = UserAub.objects.filter(role='Agent')
+            users_ids = [agent.id for agent in agents]
+            data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
+
+        # Le reste du code reste inchangé
         serializer = NoteSerializer(data=data)
         if serializer.is_valid():
             avis = serializer.save()
             for user_id in users_ids:
                 user = UserAub.objects.get(id=user_id)
-                avis.users.add(user)
+                avis.user.add(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
 
 #les note d'un utilisateur     
 class NoteByUserAPI(APIView):
@@ -660,7 +721,7 @@ class NoteByAdminAPI(APIView):
         # Récupérez tous les avis associés à l'administrateur donné
         Note = note.objects.filter(admin__id=admin_id)
         # Sérialisez les avis
-        serializer = NoteSerializer(Note, many=True)
+        serializer = NoteSerializer1(Note, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)      
     
 #----------- delete note -------
@@ -694,25 +755,40 @@ class DecisionCreateAPI(APIView):
         if request.user.role != 'Admin':
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
-        data = request.data
-        users_ids = data.get('users', [])
 
-        for user_id in users_ids:
-            try:
-                user = UserAub.objects.get(id=user_id)
-                if user.role not in ['Gerant', 'Agent']:
-                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
-            except UserAub.DoesNotExist:
-                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.copy()  # Crée une copie mutable des données de la requête
 
+        users_ids = data.getlist('user', [])  # Récupère une liste des valeurs du champ 'user', ou une liste vide si aucune valeur n'est trouvée
+
+        # Vérifie si le corps de la demande contient une liste d'utilisateurs
+        if users_ids:
+            invalid_users = []
+            for user_id in users_ids:
+                try:
+                    user = UserAub.objects.get(id=user_id)
+                    if user.role not in ['Gerant', 'Agent']:
+                        invalid_users.append(user_id)
+                except UserAub.DoesNotExist:
+                    invalid_users.append(user_id)
+            
+            if invalid_users:
+                errors = [{"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"} for user_id in invalid_users]
+                return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            agents = UserAub.objects.filter(role='Agent')
+            users_ids = [agent.id for agent in agents]
+            data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
+
+        # Le reste du code reste inchangé
         serializer = DecisionSerializer(data=data)
         if serializer.is_valid():
             avis = serializer.save()
             for user_id in users_ids:
                 user = UserAub.objects.get(id=user_id)
-                avis.users.add(user)
+                avis.user.add(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+
 
 #les note d'un utilisateur     
 class DecisionByUserAPI(APIView):
@@ -726,7 +802,7 @@ class DecisionByUserAPI(APIView):
         except UserAub.DoesNotExist:
             return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
         avis = decision.objects.filter(user=user)
-        serializer = DecisionSerializer(avis, many=True)
+        serializer = DecisionSerializer1(avis, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK) 
     
 #list des note par meme admin 
@@ -736,7 +812,7 @@ class DecisionByAdminAPI(APIView):
         # Récupérez tous les avis associés à l'administrateur donné
         Note = decision.objects.filter(admin__id=admin_id)
         # Sérialisez les avis
-        serializer = DecisionSerializer(Note, many=True)
+        serializer = DecisionSerializer1(Note, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)      
     
 #----------- delete note -------
@@ -752,7 +828,7 @@ class deleteDecision(APIView):
             return Response({'detail': 'decision deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
         except Gerant.DoesNotExist:
             return Response({'detail': 'decision not found'}, status=status.HTTP_404_NOT_FOUND)    
-             
+
 # ----------- view charts ----------------
 class ChartsCreateAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -762,24 +838,36 @@ class ChartsCreateAPI(APIView):
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data
-        users_ids = data.get('users', [])
+        users_ids = data.getlist('user', [])  # Récupère une liste des valeurs du champ 'user', ou une liste vide si aucune valeur n'est trouvée
 
-        for user_id in users_ids:
-            try:
-                user = UserAub.objects.get(id=user_id)
-                if user.role not in ['Gerant', 'Agent']:
-                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
-            except UserAub.DoesNotExist:
-                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+        # Vérifie si le corps de la demande contient une liste d'utilisateurs
+        if users_ids:
+            invalid_users = []
+            for user_id in users_ids:
+                try:
+                    user = UserAub.objects.get(id=user_id)
+                    if user.role not in ['Gerant', 'Agent']:
+                        invalid_users.append(user_id)
+                except UserAub.DoesNotExist:
+                    invalid_users.append(user_id)
+            
+            if invalid_users:
+                errors = [{"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"} for user_id in invalid_users]
+                return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            agents = UserAub.objects.filter(role='Agent')
+            users_ids = [agent.id for agent in agents]
+            data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
 
+        # Le reste du code reste inchangé
         serializer = chartSerializer(data=data)
         if serializer.is_valid():
             avis = serializer.save()
             for user_id in users_ids:
                 user = UserAub.objects.get(id=user_id)
-                avis.users.add(user)
+                avis.user.add(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
 
 #les charts d'un utilisateur     
 class ChartsByUserAPI(APIView):
@@ -801,9 +889,9 @@ class ChartsByAdminAPI(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, admin_id):
         # Récupérez tous les avis associés à l'administrateur donné
-        proc = note.objects.filter(admin__id=admin_id)
+        proc = charts.objects.filter(admin__id=admin_id)
         # Sérialisez les avis
-        serializer = chartSerializer(proc, many=True)
+        serializer = chartSerializer1(proc, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)      
     
 #----------- delete procedure -------
@@ -837,25 +925,41 @@ class plotiqueCreateAPI(APIView):
         if request.user.role != 'Admin':
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
-        data = request.data
-        users_ids = data.get('users', [])
 
-        for user_id in users_ids:
-            try:
-                user = UserAub.objects.get(id=user_id)
-                if user.role not in ['Gerant', 'Agent']:
-                    return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
-            except UserAub.DoesNotExist:
-                return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.copy()  # Crée une copie mutable des données de la requête
 
+        users_ids = data.getlist('user', [])  # Récupère une liste des valeurs du champ 'user', ou une liste vide si aucune valeur n'est trouvée
+
+        # Vérifie si le corps de la demande contient une liste d'utilisateurs
+        if users_ids:
+            invalid_users = []
+            for user_id in users_ids:
+                try:
+                    user = UserAub.objects.get(id=user_id)
+                    if user.role not in ['Gerant', 'Agent']:
+                        invalid_users.append(user_id)
+                except UserAub.DoesNotExist:
+                    invalid_users.append(user_id)
+            
+            if invalid_users:
+                errors = [{"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"} for user_id in invalid_users]
+                return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            agents = UserAub.objects.filter(role='Agent')
+            users_ids = [agent.id for agent in agents]
+            data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
+
+        # Le reste du code reste inchangé
         serializer = PolitiqueSerializer(data=data)
         if serializer.is_valid():
             avis = serializer.save()
             for user_id in users_ids:
                 user = UserAub.objects.get(id=user_id)
-                avis.users.add(user)
+                avis.user.add(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+        # serializer = PolitiqueSerializer(data=data)
+
 
 #les note d'un utilisateur     
 class PolitiqueByUserAPI(APIView):
@@ -869,7 +973,7 @@ class PolitiqueByUserAPI(APIView):
         except UserAub.DoesNotExist:
             return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
         avis = plotique.objects.filter(user=user)
-        serializer = PolitiqueSerializer(avis, many=True)
+        serializer = PolitiqueSerializer1(avis, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK) 
     
 #list des politique des banques
@@ -879,7 +983,7 @@ class PlotiqueByAdminAPI(APIView):
         # Récupérez tous les avis associés à l'administrateur donné
         politiques = plotique.objects.filter(admin__id=admin_id)
         # Sérialisez les avis
-        serializer = PolitiqueSerializer(politiques, many=True)
+        serializer = PolitiqueSerializer1(politiques, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)      
     
 #----------- delete note -------

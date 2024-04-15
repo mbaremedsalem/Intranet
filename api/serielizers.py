@@ -182,7 +182,55 @@ class ArchiveSerializer(serializers.ModelSerializer):
 #         model = Avis
 #         fields = ['id', 'titre', 'description', 'file','admin', 'user']  
 
+# class AvisSerializer(serializers.ModelSerializer):
+#     admin_nom = serializers.SerializerMethodField()
+#     admin_prenom = serializers.SerializerMethodField()
+#     admin_image = serializers.SerializerMethodField()
+ 
+#     class Meta:
+#         model = Avis
+#         fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+#         extra_kawargs = {
+#               'user':{ 'required':False},
+#          }
+
+#     def get_admin_nom(self, obj):
+#         return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+#     def get_admin_prenom(self, obj):
+#         return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+#     def get_admin_image(self, obj):
+#             # Récupérez le chemin de l'image de l'administrateur
+#             return obj.admin.image.url if obj.admin.image else None 
+
 class AvisSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Avis
+        fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom', 'admin_image', 'user', 'date']
+
+    def __init__(self, *args, **kwargs):
+        super(AvisSerializer, self).__init__(*args, **kwargs)
+
+        # Si le champ 'user' est vide dans les données entrantes, supprimez-le de la liste des champs à valider
+        if 'user' in self.fields and 'user' not in self.initial_data:
+            del self.fields['user']
+
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+        # Récupérez le chemin de l'image de l'administrateur
+        return obj.admin.image.url if obj.admin.image else None
+
+class AvisSerializer1(serializers.ModelSerializer):
     admin_nom = serializers.SerializerMethodField()
     admin_prenom = serializers.SerializerMethodField()
     admin_image = serializers.SerializerMethodField()
@@ -199,7 +247,7 @@ class AvisSerializer(serializers.ModelSerializer):
 
     def get_admin_image(self, obj):
             # Récupérez le chemin de l'image de l'administrateur
-            return obj.admin.image.url if obj.admin.image else None 
+            return obj.admin.image.url if obj.admin.image else None     
 
 class ProcedureSerializer(serializers.ModelSerializer):
     admin_nom = serializers.SerializerMethodField()
@@ -228,6 +276,12 @@ class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = note
         fields = ['id', 'titre', 'description','code','file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+    def __init__(self, *args, **kwargs):
+        super(NoteSerializer, self).__init__(*args, **kwargs)
+
+        # Si le champ 'user' est vide dans les données entrantes, supprimez-le de la liste des champs à valider
+        if 'user' in self.fields and 'user' not in self.initial_data:
+            del self.fields['user']
 
     def get_admin_nom(self, obj):
         return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
@@ -239,7 +293,51 @@ class NoteSerializer(serializers.ModelSerializer):
             # Récupérez le chemin de l'image de l'administrateur
             return obj.admin.image.url if obj.admin.image else None  
     
+class NoteSerializer1(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = note
+        fields = ['id', 'titre', 'description','code','file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+            
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None      
+    
 class PolitiqueSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = plotique
+        fields = ['id', 'titre', 'description','code','file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+    def __init__(self, *args, **kwargs):
+        super(PolitiqueSerializer, self).__init__(*args, **kwargs)
+
+        # Si le champ 'user' est vide dans les données entrantes, supprimez-le de la liste des champs à valider
+        if 'user' in self.fields and 'user' not in self.initial_data:
+            del self.fields['user']
+            
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None   
+
+class PolitiqueSerializer1(serializers.ModelSerializer):
     admin_nom = serializers.SerializerMethodField()
     admin_prenom = serializers.SerializerMethodField()
     admin_image = serializers.SerializerMethodField()
@@ -256,9 +354,33 @@ class PolitiqueSerializer(serializers.ModelSerializer):
 
     def get_admin_image(self, obj):
             # Récupérez le chemin de l'image de l'administrateur
-            return obj.admin.image.url if obj.admin.image else None      
+            return obj.admin.image.url if obj.admin.image else None          
     
 class DecisionSerializer(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = decision
+        fields = ['id', 'titre', 'description','code','file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+    def __init__(self, *args, **kwargs):
+        super(DecisionSerializer, self).__init__(*args, **kwargs)
+        # Si le champ 'user' est vide dans les données entrantes, supprimez-le de la liste des champs à valider
+        if 'user' in self.fields and 'user' not in self.initial_data:
+            del self.fields['user']
+            
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None  
+
+class DecisionSerializer1(serializers.ModelSerializer):
     admin_nom = serializers.SerializerMethodField()
     admin_prenom = serializers.SerializerMethodField()
     admin_image = serializers.SerializerMethodField()
@@ -275,7 +397,7 @@ class DecisionSerializer(serializers.ModelSerializer):
 
     def get_admin_image(self, obj):
             # Récupérez le chemin de l'image de l'administrateur
-            return obj.admin.image.url if obj.admin.image else None      
+            return obj.admin.image.url if obj.admin.image else None          
 
 class chartSerializer(serializers.ModelSerializer):
     admin_nom = serializers.SerializerMethodField()
@@ -285,6 +407,12 @@ class chartSerializer(serializers.ModelSerializer):
     class Meta:
         model = charts
         fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+    def __init__(self, *args, **kwargs):
+        super(chartSerializer, self).__init__(*args, **kwargs)
+
+        # Si le champ 'user' est vide dans les données entrantes, supprimez-le de la liste des champs à valider
+        if 'user' in self.fields and 'user' not in self.initial_data:
+            del self.fields['user']
 
     def get_admin_nom(self, obj):
         return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
@@ -294,4 +422,24 @@ class chartSerializer(serializers.ModelSerializer):
 
     def get_admin_image(self, obj):
             # Récupérez le chemin de l'image de l'administrateur
-            return obj.admin.image.url if obj.admin.image else None                    
+            return obj.admin.image.url if obj.admin.image else None   
+
+class chartSerializer1(serializers.ModelSerializer):
+    admin_nom = serializers.SerializerMethodField()
+    admin_prenom = serializers.SerializerMethodField()
+    admin_image = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = charts
+        fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+
+
+    def get_admin_nom(self, obj):
+        return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
+
+    def get_admin_prenom(self, obj):
+        return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
+
+    def get_admin_image(self, obj):
+            # Récupérez le chemin de l'image de l'administrateur
+            return obj.admin.image.url if obj.admin.image else None                        
