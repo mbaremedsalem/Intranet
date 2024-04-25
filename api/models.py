@@ -9,7 +9,6 @@ from api.manager import UserManager
 
 Role=(
     ('Admin','Admin'),
-    ('Gerant', 'Gerant'),
     ('Agent', 'Agent'),
 )  
 def image_uoload_profile_agent(instance,filname):
@@ -30,7 +29,7 @@ class UserAub(AbstractBaseUser,PermissionsMixin):
     restricted = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
-    role= models.CharField(max_length=30, choices=Role,null=True,default='Gerant')
+    role= models.CharField(max_length=30, choices=Role,null=True,default='Admin')
     is_superuser = models.BooleanField(default=False)
     is_blocked = models.BooleanField(default=False)
     number_attempt= models.IntegerField(default=0)
@@ -48,7 +47,7 @@ class Direction(models.Model):
     code = models.CharField(max_length=100,null=True)
 
     def __str__(self): 
-        return self.code     
+        return self.nom     
 
 class Archive(models.Model):
     nom = models.CharField(max_length=100, null=True)
@@ -58,23 +57,18 @@ class Archive(models.Model):
 
 class Agent(UserAub):
     direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True) 
-    archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
+    # archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
 
     def __str__(self): 
         return self.nom 
         
-#--------Girant -----------
-class Gerant(UserAub):
-    direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True) 
-    archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
-    def __str__(self): 
-        return self.nom 
-    
+
 #-------Admin------------- 
 class Admin(UserAub):
-    archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
+    direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True) 
+    # archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=True) 
     def __str__(self): 
-        return self.nom or "N/A"    
+        return self.nom     
     
 
     
@@ -123,7 +117,8 @@ class procedur(models.Model):
             return self.titre 
     
 def generate_unique_note_code():
-    return str(uuid.uuid4().hex[:6].upper())    
+    return str(uuid.uuid4().hex[:6].upper())  
+  
 class note(models.Model):
     titre = models.CharField(max_length=200,null=True)
     description = models.CharField(max_length=400,null=True)
@@ -136,7 +131,8 @@ class note(models.Model):
         return str(self.titre) if self.titre else "Titre par défaut"
     
 def generate_unique_decision_code():
-    return str(uuid.uuid4().hex[:6].upper())    
+    return str(uuid.uuid4().hex[:6].upper())  
+  
 class decision(models.Model):
     titre = models.CharField(max_length=200,null=True)
     description = models.CharField(max_length=400,null=True)
@@ -153,6 +149,7 @@ class charts(models.Model):
     description = models.CharField(max_length=400,null=True)
     admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
     user = models.ManyToManyField(UserAub, related_name='chartes_users')
+    code = models.CharField(max_length=100,null=True ,default=generate_unique_decision_code,editable=False)
     date = models.DateTimeField(auto_now=True,null=True)
     file = models.FileField(upload_to =uoload_document,null=True)
     def __str__(self):
@@ -169,6 +166,7 @@ class TextGouvernance(models.Model):
             return self.titre     
 def generate_unique_plotique_code():
     return str(uuid.uuid4().hex[:6].upper()) 
+
 class plotique(models.Model):
     titre = models.CharField(max_length=200,null=True)
     description = models.CharField(max_length=400,null=True)

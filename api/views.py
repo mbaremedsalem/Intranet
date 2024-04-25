@@ -29,38 +29,36 @@ class MytokenManager(TokenObtainPairView):
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             return Response({
-            'message': str(e),
+            'message': 'Information invalide',
             'status':status.HTTP_400_BAD_REQUEST, 
         })
-            
+
         user = serializer.validated_data
         refresh = RefreshToken.for_user(user)
         image_url = user.image.url if user.image else None
         return Response({
             'message': 'login success',
-            'status':status.HTTP_200_OK, 
+            'status': status.HTTP_200_OK, 
             'id': user.id,
-            'role':user.role,
+            'role': user.role,
             'email': user.email,
             'nom': user.nom,
-            'prenom':user.prenom,
-            'adress':user.address,
+            'prenom': user.prenom,
+            'address': user.address,
             'phone': user.phone,
             'username': user.username,
+            # 'direction': user.direction,
             'post': user.post,
-            'image':image_url,
-           
-
+            'image': image_url,
             'access': str(refresh.access_token),
             'refresh_token': str(refresh),  
         })
 
-#----------------- Register Girant ---------
+#----------------- Register ---------
 class RegisterAPI(TokenObtainPairView):
     serializer_classes = {
         'Admin': RegisterAdminSerializer,
         'Agent': AgentRegisterSerializer,
-        'Gerant': RegisterSerializer,
     }
 
     def get_serializer_class(self):
@@ -379,55 +377,10 @@ class AgentDetailAPIView(APIView):
         serializer = AgentSerializer(agent)
         return Response(serializer.data, status=status.HTTP_200_OK) 
 
-# get All gerant  
-class GerantList(APIView):
-    def get(self, request):
-        agents = Gerant.objects.all()
-        serializer = GerantSerializer(agents, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)  
-    
-#-----------delete gerant-------
-class deleteGerant(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def delete(self,request, gerant_id):
-        # Code pour supprimer un document par son ID
-        
-        try:
-            gerant = Gerant.objects.get(id=gerant_id)
-            gerant.delete()
-            return Response({'detail': 'Gerant User deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except Gerant.DoesNotExist:
-            return Response({'detail': 'Gerant not found'}, status=status.HTTP_404_NOT_FOUND)   
-        
 
-#---------update gerant ------------
-class updateGerant(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def put(self, request, gerant_id):
-        # Code pour mettre à jour un document par son ID
-        try:
-            gerant = Gerant.objects.get(id=gerant_id)
-            serializer = GerantSerializer(gerant, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Gerant.DoesNotExist:
-            return Response({'message': 'Gerant not found'}, status=status.HTTP_404_NOT_FOUND)  
 
-#--------- get gerant par id -------
-class GerantDetailAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get(self, request, gerant_id, *args, **kwargs):
-        try:
-            agent = Gerant.objects.get(id=gerant_id)
-        except Gerant.DoesNotExist:
-            return Response({'error': 'Gerant not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = GerantSerializer(agent)
-        return Response(serializer.data, status=status.HTTP_200_OK) 
             
 #----- tous les roles 
 class RoleListAPIView(APIView):
@@ -461,40 +414,6 @@ class DocumentInArchiveView(generics.ListAPIView):
         return Documents.objects.filter(archives__id=archive_id)
 
 
-# create avis en specifiant les user qui peux le voire 
-# class AvisCreateAPI(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request):
-#         if request.user.role != 'Admin':
-#             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
-
-#         data = request.data
-#         users_ids = data.get('users', [])
-
-#         if not users_ids:  # Si aucun utilisateur n'est spécifié ou si une liste vide est passée
-#             agents = UserAub.objects.filter(role='Agent')
-#             users_ids = [agent.id for agent in agents]
-
-#         for user_id in users_ids:
-#             try:
-#                 user = UserAub.objects.get(id=user_id)
-#                 if user.role not in ['Gerant', 'Agent']:
-#                     return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
-#             except UserAub.DoesNotExist:
-#                 return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
-
-#         serializer = AvisSerializer(data=data)
-#         if serializer.is_valid():
-#             avis = serializer.save()
-
-#             for user_id in users_ids:
-#                 user = UserAub.objects.get(id=user_id)
-#                 avis.user.add(user)  # Utilisation du champ ManyToMany 'user'
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
 
 class AvisCreateAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -512,7 +431,7 @@ class AvisCreateAPI(APIView):
             for user_id in users_ids:
                 try:
                     user = UserAub.objects.get(id=user_id)
-                    if user.role not in ['Gerant', 'Agent']:
+                    if user.role not in ['Admin', 'Agent']:
                         invalid_users.append(user_id)
                 except UserAub.DoesNotExist:
                     invalid_users.append(user_id)
@@ -522,7 +441,9 @@ class AvisCreateAPI(APIView):
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             agents = UserAub.objects.filter(role='Agent')
-            users_ids = [agent.id for agent in agents]
+            admins = UserAub.objects.filter(role='Admin')
+            users_ids = [agent.id for agent in agents] + [admin.id for admin in admins]
+    
             data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
 
         # Le reste du code reste inchangé
@@ -540,7 +461,7 @@ class AvisByUserAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
-        if request.user.role not in ['Gerant', 'Agent']:
+        if request.user.role not in ['Admin', 'Agent']:
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
         try:
@@ -550,7 +471,7 @@ class AvisByUserAPI(APIView):
 
         avis = Avis.objects.filter(user=user)
 
-        serializer = AvisSerializer(avis, many=True)
+        serializer = AvisSerializer1(avis, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)  
     
 #list des documents par meme admin 
@@ -577,7 +498,7 @@ class deleteAvis(APIView):
             avis = Avis.objects.get(id=avis_id)
             avis.delete()
             return Response({'detail': 'Avis deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except Gerant.DoesNotExist:
+        except Avis.DoesNotExist:
             return Response({'detail': 'Avis not found'}, status=status.HTTP_404_NOT_FOUND)   
         
 # create avis en specifiant les user qui peux le voire 
@@ -594,7 +515,7 @@ class ProcedureCreateAPI(APIView):
         for user_id in users_ids:
             try:
                 user = UserAub.objects.get(id=user_id)
-                if user.role not in ['Gerant', 'Agent']:
+                if user.role not in ['Admin', 'Agent']:
                     return Response({"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"}, status=status.HTTP_400_BAD_REQUEST)
             except UserAub.DoesNotExist:
                 return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_400_BAD_REQUEST)
@@ -613,7 +534,7 @@ class ProcedureByUserAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
-        if request.user.role not in ['Gerant', 'Agent']:
+        if request.user.role not in ['Admin', 'Agent']:
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
         try:
             user = UserAub.objects.get(id=user_id)
@@ -644,7 +565,7 @@ class deleteProcedure(APIView):
             pro = procedur.objects.get(id=procedure_id)
             pro.delete()
             return Response({'detail': 'Procedure deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except Gerant.DoesNotExist:
+        except procedur.DoesNotExist:
             return Response({'detail': 'Procedure not found'}, status=status.HTTP_404_NOT_FOUND) 
 
 # ----------- view note ----------------
@@ -676,7 +597,7 @@ class NoteCreateAPI(APIView):
             for user_id in users_ids:
                 try:
                     user = UserAub.objects.get(id=user_id)
-                    if user.role not in ['Gerant', 'Agent']:
+                    if user.role not in ['Admin', 'Agent']:
                         invalid_users.append(user_id)
                 except UserAub.DoesNotExist:
                     invalid_users.append(user_id)
@@ -686,7 +607,9 @@ class NoteCreateAPI(APIView):
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             agents = UserAub.objects.filter(role='Agent')
-            users_ids = [agent.id for agent in agents]
+            admins = UserAub.objects.filter(role='Admin')
+            users_ids = [agent.id for agent in agents] + [admin.id for admin in admins]
+            
             data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
 
         # Le reste du code reste inchangé
@@ -704,14 +627,14 @@ class NoteByUserAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
-        if request.user.role not in ['Gerant', 'Agent']:
+        if request.user.role not in ['Admin', 'Agent']:
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
         try:
             user = UserAub.objects.get(id=user_id)
         except UserAub.DoesNotExist:
             return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
-        avis = procedur.objects.filter(user=user)
-        serializer = NoteSerializer(avis, many=True)
+        avis = note.objects.filter(user=user)
+        serializer = NoteSerializer1(avis, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK) 
     
 #list des note par meme admin 
@@ -735,7 +658,7 @@ class deleteNote(APIView):
             Note = note.objects.get(id=note_id)
             Note.delete()
             return Response({'detail': 'Note deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except Gerant.DoesNotExist:
+        except note.DoesNotExist:
             return Response({'detail': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
         
 # ----------- decision -----------------
@@ -766,7 +689,7 @@ class DecisionCreateAPI(APIView):
             for user_id in users_ids:
                 try:
                     user = UserAub.objects.get(id=user_id)
-                    if user.role not in ['Gerant', 'Agent']:
+                    if user.role not in ['Admin', 'Agent']:
                         invalid_users.append(user_id)
                 except UserAub.DoesNotExist:
                     invalid_users.append(user_id)
@@ -776,7 +699,9 @@ class DecisionCreateAPI(APIView):
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             agents = UserAub.objects.filter(role='Agent')
-            users_ids = [agent.id for agent in agents]
+            admins = UserAub.objects.filter(role='Admin')
+            users_ids = [agent.id for agent in agents] + [admin.id for admin in admins]
+            
             data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
 
         # Le reste du code reste inchangé
@@ -795,7 +720,7 @@ class DecisionByUserAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
-        if request.user.role not in ['Gerant', 'Agent']:
+        if request.user.role not in ['Admin', 'Agent']:
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
         try:
             user = UserAub.objects.get(id=user_id)
@@ -826,7 +751,7 @@ class deleteDecision(APIView):
             Decision = decision.objects.get(id=decision_id)
             Decision.delete()
             return Response({'detail': 'decision deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except Gerant.DoesNotExist:
+        except decision.DoesNotExist:
             return Response({'detail': 'decision not found'}, status=status.HTTP_404_NOT_FOUND)    
 
 # ----------- view charts ----------------
@@ -846,7 +771,7 @@ class ChartsCreateAPI(APIView):
             for user_id in users_ids:
                 try:
                     user = UserAub.objects.get(id=user_id)
-                    if user.role not in ['Gerant', 'Agent']:
+                    if user.role not in ['Admin', 'Agent']:
                         invalid_users.append(user_id)
                 except UserAub.DoesNotExist:
                     invalid_users.append(user_id)
@@ -856,7 +781,9 @@ class ChartsCreateAPI(APIView):
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             agents = UserAub.objects.filter(role='Agent')
-            users_ids = [agent.id for agent in agents]
+            admins = UserAub.objects.filter(role='Admin')
+            users_ids = [agent.id for agent in agents] + [admin.id for admin in admins]
+            
             data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
 
         # Le reste du code reste inchangé
@@ -874,15 +801,17 @@ class ChartsByUserAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
-        if request.user.role not in ['Gerant', 'Agent']:
+        if request.user.role not in ['Admin', 'Agent']:
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
         try:
             user = UserAub.objects.get(id=user_id)
         except UserAub.DoesNotExist:
             return Response({"error": f"L'utilisateur avec l'ID {user_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
-        avis = procedur.objects.filter(user=user)
-        serializer = chartSerializer(avis, many=True)
+        avis = charts.objects.filter(user=user)
+        serializer = chartSerializer1(avis, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK) 
+    
+
     
 #list des charts par meme admin 
 class ChartsByAdminAPI(APIView):
@@ -905,7 +834,7 @@ class deletecharts(APIView):
             pro = charts.objects.get(id=chart_id)
             pro.delete()
             return Response({'detail': 'Charts deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except Gerant.DoesNotExist:
+        except charts.DoesNotExist:
             return Response({'detail': 'Charts not found'}, status=status.HTTP_404_NOT_FOUND)
         
 #-------------------get all document ---------------#
@@ -936,7 +865,7 @@ class plotiqueCreateAPI(APIView):
             for user_id in users_ids:
                 try:
                     user = UserAub.objects.get(id=user_id)
-                    if user.role not in ['Gerant', 'Agent']:
+                    if user.role not in ['Admin', 'Agent']:
                         invalid_users.append(user_id)
                 except UserAub.DoesNotExist:
                     invalid_users.append(user_id)
@@ -946,7 +875,9 @@ class plotiqueCreateAPI(APIView):
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             agents = UserAub.objects.filter(role='Agent')
-            users_ids = [agent.id for agent in agents]
+            admins = UserAub.objects.filter(role='Admin')
+
+            users_ids = [agent.id for agent in agents] + [admin.id for admin in admins]
             data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
 
         # Le reste du code reste inchangé
@@ -966,7 +897,7 @@ class PolitiqueByUserAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
-        if request.user.role not in ['Gerant', 'Agent']:
+        if request.user.role not in ['Admin', 'Agent']:
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
         try:
             user = UserAub.objects.get(id=user_id)
@@ -996,5 +927,61 @@ class deletePlotique(APIView):
             Poli = plotique.objects.get(id=plotique_id)
             Poli.delete()
             return Response({'detail': 'plotique deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except Gerant.DoesNotExist:
+        except plotique.DoesNotExist:
             return Response({'detail': 'plotique not found'}, status=status.HTTP_404_NOT_FOUND)        
+
+# get utilisateur by direction  
+class UsersInDirection(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, format=None):
+        direction_code = request.data.get('direction_code')  # Récupère le code de la direction depuis le corps de la requête
+        
+        if direction_code:
+            # Recherche des utilisateurs dans la direction spécifiée
+            agents = Agent.objects.filter(direction__code=direction_code)
+            admins = Admin.objects.filter(direction__code=direction_code)
+
+            # Crée une liste pour stocker les noms et les IDs des utilisateurs
+            user_data = []
+
+            # Ajoute les noms et les IDs des agents à la liste
+            for agent in agents:
+                user_data.append({'nom': agent.nom, 'id': agent.id})
+
+            # Ajoute les noms et les IDs des admins à la liste
+            for admin in admins:
+                user_data.append({'nom': admin.nom, 'id': admin.id})
+
+            # Renvoie la liste des noms et des IDs des utilisateurs dans la direction spécifiée
+            return Response({'users_in_direction': user_data})
+        else:
+            return Response({'error': 'Direction code not provided'}, status=400)      
+        
+
+#
+# class UsersInDirection(APIView):
+#     permission_classes = [IsAuthenticated]
+    
+#     def post(self, request, format=None):
+#         direction_codes = request.data.get('direction_codes', [])  # Récupère la liste des codes de direction depuis le corps de la requête
+
+#         if direction_codes:
+#             # Recherche des utilisateurs dans les directions spécifiées
+#             users = []
+#             for direction_code in direction_codes:
+#                 agents = Agent.objects.filter(direction__code=direction_code)
+#                 admins = Admin.objects.filter(direction__code=direction_code)
+
+#                 # Ajoute les noms et les IDs des agents à la liste
+#                 for agent in agents:
+#                     users.append({'nom': agent.nom, 'id': agent.id, 'type': 'agent'})
+
+#                 # Ajoute les noms et les IDs des admins à la liste
+#                 for admin in admins:
+#                     users.append({'nom': admin.nom, 'id': admin.id, 'type': 'admin'})
+
+#             # Renvoie la liste des noms et des IDs des utilisateurs dans les directions spécifiées
+#             return Response({'users_in_direction': users})
+#         else:
+#             return Response({'error': 'Direction codes not provided'}, status=400) 

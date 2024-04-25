@@ -5,13 +5,14 @@ from django.contrib.auth import authenticate
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model= UserAub
-        fields= ('nom','prenom','username','address','email','phone','role')
+        fields= ('nom','prenom','username','address','email','phone','role','direction')
 
 #--------------user Agent serializer-------------
 class UserAgentSerializer(serializers.ModelSerializer):
     class Meta:
         model= Agent
-        fields= ('nom','prenom','username','address','email','phone','role')        
+        fields= ('nom','prenom','username','address','email','phone','role','direction')   
+
 
 #--------------login---------------------
 class MyTokenObtainPairSerializer(serializers.Serializer):
@@ -28,55 +29,35 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
         elif user and user.is_active and user.is_blocked:
             # return Response('message')
             # return Response(serializers.errors)
-            
-            raise serializers.ValidationError({'message':'Compte blocké, veillez contacter lagence '})
+            raise serializers.ValidationError({'message':'Compte blocké, veillez contacter l\'daministrateur'})
         
         try:
-            obj= Gerant.objects.get(phone=data['username'])
-            if obj.number_attempt<3:
+            obj= UserAub.objects.get(phone=data['username'])
+            print(obj.number_attempt)
+            if obj.number_attempt<5:
                 obj.number_attempt +=1
+                print(obj.number_attempt)
                 obj.save()
-                raise serializers.ValidationError({'message':'Compte blocké .'})
+                raise serializers.ValidationError({'message':'Compte blocké, veillez contacter l\'daministrateur.'})
             else:
                 obj.number_attempt +=1
+                print(obj.number_attempt)
                 obj.is_blocked=True
                 obj.save()
-                raise serializers.ValidationError({'message':'Compte blocké, veillez contacter lagence '})
+                raise serializers.ValidationError({'message':'Compte blocké, veillez contacter l\'daministrateur.'})
         except:
-            raise serializers.ValidationError({'message':'Informations invalides.'})  
+            raise serializers.ValidationError({'message':'Informations invalides.'}) 
         
 
 
-#-----------------Serializer register Girant -------------------
-class RegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Gerant
-        fields = ('nom', 'role','image','post','phone','username','prenom','email','address','password')
-        extra_kwargs = {
-            'password': {'write_only': True}
-        }
 
-def create(self, validated_data):
-    user = Gerant.objects.create_user(
-        nom=validated_data['nom'],
-        role=validated_data['role'],
-        post=validated_data['post'],
-        image=validated_data['image'],
-        phone=validated_data['phone'],
-        prenom=validated_data['prenom'],
-        email=validated_data['email'],
-        address=validated_data['address'],
-        password=validated_data['password'],
-        username=validated_data['username']
-        
-    )
 
-    return user       
+    
 #--------------------Register Agent ----------------------
 class AgentRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agent
-        fields = ('nom', 'role','image','post','phone','username','prenom','email','address','password')
+        fields = ('nom', 'role','image','post','phone','username','prenom','email','address','password','direction')
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -91,7 +72,8 @@ def create(self, validated_data):
         prenom=validated_data['prenom'],
         email=validated_data['email'],
         address=validated_data['address'],
-        password=validated_data['password']
+        password=validated_data['password'],
+        direction=validated_data['direction']
             )
 
     return user
@@ -99,7 +81,7 @@ def create(self, validated_data):
 class RegisterAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = Admin
-        fields =  ('nom', 'role','image','post','username','phone', 'prenom','email','address','password')
+        fields =  ('nom', 'role','image','post','username','phone', 'prenom','email','address','password','direction')
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -156,12 +138,7 @@ class UpdateAgentSerializers(serializers.ModelSerializer):
     class Meta:
         model = Agent
         fields = ('nom','prenom','phone','email','address', 'direction_nom','post')        
-# ------------- gerant serializer -----------------
-class GerantSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Gerant
-        fields = '__all__'        
+   
 
 # ---------- roles -----
 class RoleSerializer(serializers.Serializer):
@@ -174,35 +151,8 @@ class ArchiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Archive
         fields = ['id','nom', 'date_ajout', 'documents'] 
+    
 #avis serializer 
-
-
-# class AvisSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Avis
-#         fields = ['id', 'titre', 'description', 'file','admin', 'user']  
-
-# class AvisSerializer(serializers.ModelSerializer):
-#     admin_nom = serializers.SerializerMethodField()
-#     admin_prenom = serializers.SerializerMethodField()
-#     admin_image = serializers.SerializerMethodField()
- 
-#     class Meta:
-#         model = Avis
-#         fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
-#         extra_kawargs = {
-#               'user':{ 'required':False},
-#          }
-
-#     def get_admin_nom(self, obj):
-#         return obj.admin.nom if hasattr(obj.admin, 'nom') else ''
-
-#     def get_admin_prenom(self, obj):
-#         return obj.admin.prenom if hasattr(obj.admin, 'prenom') else ''  
-
-#     def get_admin_image(self, obj):
-#             # Récupérez le chemin de l'image de l'administrateur
-#             return obj.admin.image.url if obj.admin.image else None 
 
 class AvisSerializer(serializers.ModelSerializer):
     admin_nom = serializers.SerializerMethodField()
@@ -431,7 +381,7 @@ class chartSerializer1(serializers.ModelSerializer):
  
     class Meta:
         model = charts
-        fields = ['id', 'titre', 'description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
+        fields = ['id', 'titre', 'code','description', 'file', 'admin', 'admin_nom', 'admin_prenom','admin_image','user', 'date']
 
 
     def get_admin_nom(self, obj):
@@ -443,3 +393,7 @@ class chartSerializer1(serializers.ModelSerializer):
     def get_admin_image(self, obj):
             # Récupérez le chemin de l'image de l'administrateur
             return obj.admin.image.url if obj.admin.image else None                        
+
+
+
+

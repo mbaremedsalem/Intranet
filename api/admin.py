@@ -45,22 +45,23 @@ class AdminResource(resources.ModelResource):
 class UserAdmin(ImportExportModelAdmin):
     model = Admin
     resource_class = AdminResource
-    search_fields = ('email', 'nom', 'post', 'phone', 'prenom', 'username')
-    list_filter = ('email', 'nom', 'phone', 'post', 'username', 'is_active', 'is_staff')
-    ordering = ('nom',)  
-    list_display = ('phone', 'prenom', 'email', 'post', 'nom', 'username', 'is_superuser',
+    search_fields = ('email', 'nom','post','phone','prenom','direction','username')
+    list_filter = ('email', 'nom', 'post','phone','direction' ,'is_active', 'is_staff')
+    ordering = ('nom',)  # Update the ordering field here
+    list_display = ('phone','prenom','post','email','direction','username','nom','is_superuser',
                     'is_active', 'is_staff', 'is_blocked', 'password',)
     fieldsets = (
-        (None, {'fields': ('email', 'nom', 'post', 'phone', 'username', 'image', 'role', 'prenom', 'password')}),
+        (None, {'fields': ('email', 'nom','post','direction','username','phone','image','role','prenom')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_blocked')}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'nom', 'prenom', 'post', 'direction', 'phone', 'username', 'password', 'is_active', 'is_staff', 'is_blocked')
-        }),
-    )
+            'fields': ('email', 'nom','direction' ,'post','prenom','username','phone','is_active', 'is_staff', 'is_blocked')
+            }
+         ),
+    )  
 
     def save_model(self, request, obj, form, change):
         # Hasher le mot de passe uniquement s'il est présent et qu'il a été modifié
@@ -68,25 +69,6 @@ class UserAdmin(ImportExportModelAdmin):
             obj.password = make_password(obj.password)
         super().save_model(request, obj, form, change)
 
-class UserGirant(admin.ModelAdmin):
-    model = Gerant
-    search_fields = ('email', 'nom','post','phone','prenom','direction','username')
-    list_filter = ('email', 'nom', 'phone','post','direction','username','is_active', 'is_staff')
-    ordering = ('nom',)  # Update the ordering field here
-    list_display = ('phone','prenom','email','post','nom','direction','username','is_superuser',
-                    'is_active', 'is_staff', 'is_blocked', 'password',)
-    fieldsets = (
-        (None, {'fields': ('email', 'nom', 'post','phone','direction','username','image','role','prenom')}),
-        ('Permissions', {'fields': ('is_staff', 'is_active', 'is_blocked')}),
-    )
-
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'nom', 'prenom','post','direction','phone','username','is_active', 'is_staff', 'is_blocked')
-            }
-         ),
-    )
 
 class UserAgent(admin.ModelAdmin):
     model = Agent
@@ -168,7 +150,7 @@ class ArchiveConf(admin.ModelAdmin):
 
 admin.site.register(UserAub, UserAdminConfig)
 admin.site.register(Agent, UserAgent)
-admin.site.register(Gerant, UserGirant)
+
 admin.site.register(Admin, UserAdmin)
 admin.site.register(Documents,DocumentConf)
 admin.site.register(Direction,DirectionConf)
@@ -179,6 +161,33 @@ admin.site.register(note)
 admin.site.register(decision)
 admin.site.register(charts)
 admin.site.register(plotique)
+
+# {
+# 	"Version": "2012-10-17",
+# 	"Statement": [
+# 		{
+# 			"Effect": "Allow",
+# 			"Principal": "*",
+# 			"Action": "s3:ListBucket",
+# 			"Resource": "arn:aws:s3:::shop-django-rest"
+# 		},
+# 		{
+# 			"Effect": "Allow",
+# 			"Principal": "*",
+# 			"Action": "s3:GetBucketLocation",
+# 			"Resource": "arn:aws:s3:::shop-django-rest"
+# 		},
+# 		{
+# 			"Effect": "Allow",
+# 			"Principal": "*",
+# 			"Action": [
+# 				"s3:GetObject",
+# 				"s3:DeleteObject"
+# 			],
+# 			"Resource": "arn:aws:s3:::shop-django-rest/*"
+# 		}
+# 	]
+# }
 
 
 

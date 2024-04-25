@@ -47,14 +47,6 @@ urlpatterns = [
     # ------------- get Agent by id --------
     path('agent/<int:agent_id>/', AgentDetailAPIView.as_view(), name='agent-detail'),
 
-    # -------------user Gerant ------------
-    path('get-gerant/', GerantList.as_view(), name='gerant-list'),
-    # -----------delete Gerant---------------
-    path('delete-gerant/<int:gerant_id>', deleteGerant.as_view(), name='gerant-delete'),
-    # -----------update gerant --------------
-    path('update-gerant/<int:gerant_id>', updateGerant.as_view(), name='update-gerant'),
-    # ------------- get Gerant by id --------
-    path('gerant/<int:gerant_id>/', GerantDetailAPIView.as_view(), name='agent-detail'),
 
     # --------------------- list role ------------------------
     path('roles/', RoleListAPIView.as_view(), name='role-list'),
@@ -95,6 +87,8 @@ urlpatterns = [
     path('create-note/', NoteCreateAPI.as_view(), name='chart-posted'),
     #------- get avis user agent ou gerant -----
     path('avis/user/<int:user_id>/', AvisByUserAPI.as_view(), name='chart-get-user'),
+    # get not by user
+    path('note-by-user/<int:user_id>/', NoteByUserAPI.as_view(), name='chart-get-user'),
     # get procedure by admin
     path('note-by-admin/<int:admin_id>/', NoteByAdminAPI.as_view(), name='chart-by-admin'),
     # delete procedure 
@@ -104,8 +98,8 @@ urlpatterns = [
     path('get_all_decisions/', getAllDecision.as_view(), name='getall-decision'),
     #------- create note -------- 
     path('create-decision/', DecisionCreateAPI.as_view(), name='get-decision'),
-    #------- get avis user agent ou gerant -----
-    path('decision/user/<int:user_id>/', DecisionByUserAPI.as_view(), name='decision-get-user'),
+    #------- get note user agent ou gerant -----
+    path('decision-by-user/<int:user_id>/', DecisionByUserAPI.as_view(), name='decision-get-user'),
     # get procedure by admin
     path('decision-by-admin/<int:admin_id>/', DecisionByAdminAPI.as_view(), name='decision-by-admin'),
     # delete procedure 
@@ -116,6 +110,8 @@ urlpatterns = [
     path('create-chart/', ChartsCreateAPI.as_view(), name='chart-posted'),
     #------- get avis user agent ou gerant -----
     path('avis/user/<int:user_id>/', AvisByUserAPI.as_view(), name='chart-get-user'),
+    # get chart by user
+    path('chart-by-user/<int:user_id>/', ChartsByUserAPI.as_view(), name='chart-get-user'),
     # get chart by admin
     path('chart-by-admin/<int:admin_id>/', ChartsByAdminAPI.as_view(), name='chart-by-admin'),
     # delete chart 
@@ -126,10 +122,15 @@ urlpatterns = [
     #------- create plotique -------- 
     path('create-plotique/', plotiqueCreateAPI.as_view(), name='plotique-posted'),
     #------- get avis user agent ou gerant -----
-    path('plotique/user/<int:user_id>/', PolitiqueByUserAPI.as_view(), name='chart-get-user'),
+    path('plotique-by-user/<int:user_id>/', PolitiqueByUserAPI.as_view(), name='chart-get-user'),
     # get chart by admin
     path('plotique-by-admin/<int:admin_id>/', PlotiqueByAdminAPI.as_view(), name='plotique-by-admin'),
     # delete chart 
     path('delete-plotique/<int:plotique_id>/', deletePlotique.as_view(), name='delete-plotique-by-id'),
+
+    # --------- direction ---------
+    
+    path('get-all-user-by-direction/', UsersInDirection.as_view(), name='all-user-direction'),
+
 
 ]
