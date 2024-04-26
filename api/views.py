@@ -846,7 +846,7 @@ class getAllplotique(APIView):
         serializer = PolitiqueSerializer(politiques, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK,content_type='application/pdf')   
            
-# ----------create note --------
+# ----------create politique --------
 class plotiqueCreateAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -854,12 +854,16 @@ class plotiqueCreateAPI(APIView):
         if request.user.role != 'Admin':
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
+        # Check file size
+        file_size = request.data.get('file', None)
+        if file_size and file_size.size > 3 * 1024 * 1024:  # Check if file size exceeds 3 MB
+            return Response({"error": "La taille du fichier ne doit pas dépasser 3 MB"}, status=status.HTTP_400_BAD_REQUEST)
 
-        data = request.data.copy()  # Crée une copie mutable des données de la requête
+        data = request.data.copy()  # Create a mutable copy of request data
 
-        users_ids = data.getlist('user', [])  # Récupère une liste des valeurs du champ 'user', ou une liste vide si aucune valeur n'est trouvée
+        users_ids = data.getlist('user', [])  # Get a list of values from the 'user' field, or an empty list if no value is found
 
-        # Vérifie si le corps de la demande contient une liste d'utilisateurs
+        # Check if request body contains a list of users
         if users_ids:
             invalid_users = []
             for user_id in users_ids:
@@ -878,9 +882,8 @@ class plotiqueCreateAPI(APIView):
             admins = UserAub.objects.filter(role='Admin')
 
             users_ids = [agent.id for agent in agents] + [admin.id for admin in admins]
-            data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
+            data['users'] = users_ids  # Update users in request body
 
-        # Le reste du code reste inchangé
         serializer = PolitiqueSerializer(data=data)
         if serializer.is_valid():
             avis = serializer.save()
@@ -888,7 +891,49 @@ class plotiqueCreateAPI(APIView):
                 user = UserAub.objects.get(id=user_id)
                 avis.user.add(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class plotiqueCreateAPI(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         if request.user.role != 'Admin':
+#             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+
+
+#         data = request.data.copy()  # Crée une copie mutable des données de la requête
+
+#         users_ids = data.getlist('user', [])  # Récupère une liste des valeurs du champ 'user', ou une liste vide si aucune valeur n'est trouvée
+
+#         # Vérifie si le corps de la demande contient une liste d'utilisateurs
+#         if users_ids:
+#             invalid_users = []
+#             for user_id in users_ids:
+#                 try:
+#                     user = UserAub.objects.get(id=user_id)
+#                     if user.role not in ['Admin', 'Agent']:
+#                         invalid_users.append(user_id)
+#                 except UserAub.DoesNotExist:
+#                     invalid_users.append(user_id)
+            
+#             if invalid_users:
+#                 errors = [{"error": f"L'utilisateur avec l'ID {user_id} n'est pas un Gerant ou un Agent"} for user_id in invalid_users]
+#                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+#         else:
+#             agents = UserAub.objects.filter(role='Agent')
+#             admins = UserAub.objects.filter(role='Admin')
+
+#             users_ids = [agent.id for agent in agents] + [admin.id for admin in admins]
+#             data['users'] = users_ids  # Met à jour les utilisateurs dans le corps de la demande
+
+#         # Le reste du code reste inchangé
+#         serializer = PolitiqueSerializer(data=data)
+#         if serializer.is_valid():
+#             avis = serializer.save()
+#             for user_id in users_ids:
+#                 user = UserAub.objects.get(id=user_id)
+#                 avis.user.add(user)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
         # serializer = PolitiqueSerializer(data=data)
 
 

@@ -89,6 +89,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
+MAX_UPLOAD_SIZE = 3 * 1024 * 1024  # 3 MB
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

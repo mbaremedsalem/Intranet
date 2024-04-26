@@ -150,7 +150,6 @@ class ArchiveConf(admin.ModelAdmin):
 
 admin.site.register(UserAub, UserAdminConfig)
 admin.site.register(Agent, UserAgent)
-
 admin.site.register(Admin, UserAdmin)
 admin.site.register(Documents,DocumentConf)
 admin.site.register(Direction,DirectionConf)

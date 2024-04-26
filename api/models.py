@@ -3,8 +3,10 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
-
 from api.manager import UserManager
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
 # Create your models here.
 
 Role=(
@@ -70,8 +72,12 @@ class Admin(UserAub):
     def __str__(self): 
         return self.nom     
     
+def validate_file_size(value):
+    filesize = value.size
+    if filesize > settings.MAX_UPLOAD_SIZE:
+        raise ValidationError(f"Le fichier dépasse la taille maximale autorisée de {settings.MAX_UPLOAD_SIZE} octets.")
 
-    
+
 def uoload_document(instance, filname):
     extention = os.path.splitext(filname)[1]
     unique_filename = f"{instance.id}{extention}"
@@ -83,7 +89,7 @@ class Documents(models.Model):
     sujet = models.CharField(max_length=100,null=True)
     code = models.CharField(max_length=100,null=True ,default=generate_unique_code,editable=False)
     description = models.TextField(max_length=400,null=True)
-    file = models.FileField(upload_to =uoload_document,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True,validators=[validate_file_size])
     admin = models.ForeignKey(Admin, on_delete=models.CASCADE,null=True)
     direction = models.ForeignKey(Direction, on_delete=models.CASCADE, null=True)
     date_ajout = models.DateTimeField(auto_now=True,null=True)
@@ -102,7 +108,7 @@ class Avis(models.Model):
     admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
     user = models.ManyToManyField(UserAub, related_name='avis_users')
     date = models.DateTimeField(auto_now=True,null=True)
-    file = models.FileField(upload_to =uoload_document,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True,validators=[validate_file_size])
     def __str__(self):
             return self.titre 
 
@@ -112,7 +118,7 @@ class procedur(models.Model):
     admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
     user = models.ManyToManyField(UserAub, related_name='procedure_users')
     date = models.DateTimeField(auto_now=True,null=True)
-    file = models.FileField(upload_to =uoload_document,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True,validators=[validate_file_size])
     def __str__(self):
             return self.titre 
     
@@ -126,7 +132,7 @@ class note(models.Model):
     user = models.ManyToManyField(UserAub, related_name='notes_users')
     code = models.CharField(max_length=100,null=True ,default=generate_unique_note_code,editable=False)
     date = models.DateTimeField(auto_now=True,null=True)
-    file = models.FileField(upload_to =uoload_document,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True,validators=[validate_file_size])
     def __str__(self):
         return str(self.titre) if self.titre else "Titre par défaut"
     
@@ -140,7 +146,7 @@ class decision(models.Model):
     user = models.ManyToManyField(UserAub, related_name='decision_users')
     code = models.CharField(max_length=100,null=True ,default=generate_unique_decision_code,editable=False)
     date = models.DateTimeField(auto_now=True,null=True)
-    file = models.FileField(upload_to =uoload_document,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True,validators=[validate_file_size])
     def __str__(self):
         return str(self.titre) if self.titre else "Titre par défaut"    
 
@@ -151,7 +157,7 @@ class charts(models.Model):
     user = models.ManyToManyField(UserAub, related_name='chartes_users')
     code = models.CharField(max_length=100,null=True ,default=generate_unique_decision_code,editable=False)
     date = models.DateTimeField(auto_now=True,null=True)
-    file = models.FileField(upload_to =uoload_document,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True,validators=[validate_file_size])
     def __str__(self):
         return self.titre or "Titre par défaut"
 
@@ -161,7 +167,7 @@ class TextGouvernance(models.Model):
     admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
     user = models.ManyToManyField(UserAub, related_name='gouvernance_users')
     date = models.DateTimeField(auto_now=True,null=True)
-    file = models.FileField(upload_to =uoload_document,null=True)
+    file = models.FileField(upload_to =uoload_document,null=True,validators=[validate_file_size])
     def __str__(self):
             return self.titre     
 def generate_unique_plotique_code():
@@ -174,6 +180,6 @@ class plotique(models.Model):
     admin = models.ForeignKey(Admin, on_delete=models.CASCADE)  # Assurez-vous que null=False
     user = models.ManyToManyField(UserAub, related_name='plotique_users')
     date = models.DateTimeField(auto_now=True,null=True)
-    file = models.FileField(upload_to =uoload_document,null=True)
+    file = models.FileField(upload_to=uoload_document, null=True, validators=[validate_file_size])
     def __str__(self):
             return self.titre             
