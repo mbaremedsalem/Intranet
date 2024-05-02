@@ -421,6 +421,10 @@ class AvisCreateAPI(APIView):
     def post(self, request):
         if request.user.role != 'Admin':
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+        # Check file size
+        file_size = request.data.get('file', None)
+        if file_size and file_size.size > 3 * 1024 * 1024:  # Check if file size exceeds 3 MB
+            return Response({"error": "La taille du fichier ne doit pas dépasser 3 MB"}, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data
         users_ids = data.getlist('user', [])  # Récupère une liste des valeurs du champ 'user', ou une liste vide si aucune valeur n'est trouvée
@@ -508,6 +512,10 @@ class ProcedureCreateAPI(APIView):
     def post(self, request):
         if request.user.role != 'Admin':
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+        # Check file size
+        file_size = request.data.get('file', None)
+        if file_size and file_size.size > 3 * 1024 * 1024:  # Check if file size exceeds 3 MB
+            return Response({"error": "La taille du fichier ne doit pas dépasser 3 MB"}, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data
         users_ids = data.get('users', [])
@@ -586,6 +594,10 @@ class NoteCreateAPI(APIView):
         if request.user.role != 'Admin':
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
+        # Check file size
+        file_size = request.data.get('file', None)
+        if file_size and file_size.size > 3 * 1024 * 1024:  # Check if file size exceeds 3 MB
+            return Response({"error": "La taille du fichier ne doit pas dépasser 3 MB"}, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()  # Crée une copie mutable des données de la requête
 
@@ -662,7 +674,7 @@ class deleteNote(APIView):
             return Response({'detail': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
         
 # ----------- decision -----------------
-#-------------------get all document ---------------#
+#-------------------get all Decision ---------------#
 class getAllDecision(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
@@ -670,7 +682,7 @@ class getAllDecision(APIView):
         Decision = decision.objects.all()
         serializer = DecisionSerializer(Decision, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK,content_type='application/pdf')          
-# ----------create note --------
+# ----------create Decision --------
 class DecisionCreateAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -678,6 +690,10 @@ class DecisionCreateAPI(APIView):
         if request.user.role != 'Admin':
             return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
+        # Check file size
+        file_size = request.data.get('file', None)
+        if file_size and file_size.size > 3 * 1024 * 1024:  # Check if file size exceeds 3 MB
+            return Response({"error": "La taille du fichier ne doit pas dépasser 3 MB"}, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()  # Crée une copie mutable des données de la requête
 
@@ -715,7 +731,7 @@ class DecisionCreateAPI(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
 
 
-#les note d'un utilisateur     
+#les Decision d'un utilisateur     
 class DecisionByUserAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -852,12 +868,12 @@ class plotiqueCreateAPI(APIView):
 
     def post(self, request):
         if request.user.role != 'Admin':
-            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"message": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
 
         # Check file size
         file_size = request.data.get('file', None)
         if file_size and file_size.size > 3 * 1024 * 1024:  # Check if file size exceeds 3 MB
-            return Response({"error": "La taille du fichier ne doit pas dépasser 3 MB"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "La taille du fichier ne doit pas dépasser 3 MB"}, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()  # Create a mutable copy of request data
 
@@ -890,7 +906,7 @@ class plotiqueCreateAPI(APIView):
             for user_id in users_ids:
                 user = UserAub.objects.get(id=user_id)
                 avis.user.add(user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"data": serializer.data, "message": "success"},status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 # class plotiqueCreateAPI(APIView):
 #     permission_classes = [IsAuthenticated]
@@ -977,6 +993,35 @@ class deletePlotique(APIView):
 
 # get utilisateur by direction  
 class UsersInDirection(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, format=None):
+        direction_code = request.data.get('direction_code')  # Récupère le code de la direction depuis le corps de la requête
+        
+        if direction_code:
+            # Recherche des utilisateurs dans la direction spécifiée
+            agents = Agent.objects.filter(direction__code=direction_code)
+            admins = Admin.objects.filter(direction__code=direction_code)
+
+            # Crée une liste pour stocker les noms et les IDs des utilisateurs
+            user_data = []
+
+            # Ajoute les noms et les IDs des agents à la liste
+            for agent in agents:
+                user_data.append({'nom': agent.nom, 'id': agent.id})
+
+            # Ajoute les noms et les IDs des admins à la liste
+            for admin in admins:
+                user_data.append({'nom': admin.nom, 'id': admin.id})
+
+            # Renvoie la liste des noms et des IDs des utilisateurs dans la direction spécifiée
+            return Response({'users_in_direction': user_data})
+        else:
+            return Response({'error': 'Direction code not provided'}, status=400)      
+        
+
+#Commenter a une post
+class CommentPost(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, format=None):

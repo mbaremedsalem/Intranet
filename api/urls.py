@@ -37,7 +37,6 @@ urlpatterns = [
     path('update-direction/<int:direction_id>', updateDirection.as_view(), name='update-direction'),
 
 
-
     # -----------user Agent-----------------
     path('get-agents/', AgentList.as_view(), name='agent-list'),
     # -----------delete Agent---------------
@@ -131,6 +130,5 @@ urlpatterns = [
     # --------- direction ---------
     
     path('get-all-user-by-direction/', UsersInDirection.as_view(), name='all-user-direction'),
-
 
 ]
