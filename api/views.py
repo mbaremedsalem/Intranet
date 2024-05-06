@@ -828,13 +828,18 @@ class ChartsByUserAPI(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK) 
     
 
-    
 #list des charts par meme admin 
 class ChartsByAdminAPI(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, admin_id):
+        if request.user.role not in ['Admin', 'Agent']:
+            return Response({"error": "Vous n'êtes pas autorisé à effectuer cette action"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = UserAub.objects.get(id=admin_id)
+        except UserAub.DoesNotExist:
+            return Response({"error": f"L'utilisateur avec l'ID {admin_id} n'existe pas"}, status=status.HTTP_404_NOT_FOUND)
         # Récupérez tous les avis associés à l'administrateur donné
-        proc = charts.objects.filter(admin__id=admin_id)
+        proc = charts.objects.filter(user=user)
         # Sérialisez les avis
         serializer = chartSerializer1(proc, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)      

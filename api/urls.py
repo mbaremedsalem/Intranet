@@ -116,7 +116,6 @@ urlpatterns = [
     # delete chart 
     path('delete-chart/<int:chart_id>/', deletecharts.as_view(), name='delete-chart-by-id'),
 
-
     # -------- poltique -----------
     #------- create plotique -------- 
     path('create-plotique/', plotiqueCreateAPI.as_view(), name='plotique-posted'),
