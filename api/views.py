@@ -13,7 +13,50 @@ from rest_framework.views import APIView
 from .models import *
 import random
 from rest_framework.permissions import AllowAny
+#---- change password -------
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import GenericAPIView
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth import authenticate
 
+
+class ChangePasswordView(GenericAPIView):
+    authentication_classes = []  # Aucune authentification requise
+    permission_classes = []  # Aucune permission requise
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+
+        if not email or not old_password or not new_password:
+            return Response({
+                'message': 'Veuillez fournir l\'adresse e-mail, l\'ancien mot de passe et le nouveau mot de passe.',
+                'status': status.HTTP_400_BAD_REQUEST,
+            })
+
+        user = UserAub.objects.filter(email=email).first()
+
+        if not user:
+            return Response({
+                'message': 'Aucun utilisateur trouvé avec cette adresse e-mail.',
+                'status': status.HTTP_404_NOT_FOUND,
+            })
+
+        if not user.check_password(old_password):
+            return Response({
+                'message': 'Ancien mot de passe incorrect.',
+                'status': status.HTTP_400_BAD_REQUEST,
+            })
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({
+            'message': 'Mot de passe changé avec succès.',
+            'status': status.HTTP_200_OK,
+        })
 
 #-------------------login---------------------
 class InvalidInformationException(APIException):
@@ -36,23 +79,31 @@ class MytokenManager(TokenObtainPairView):
         user = serializer.validated_data
         refresh = RefreshToken.for_user(user)
         image_url = user.image.url if user.image else None
-        return Response({
-            'message': 'login success',
-            'status': status.HTTP_200_OK, 
-            'id': user.id,
-            'role': user.role,
-            'email': user.email,
-            'nom': user.nom,
-            'prenom': user.prenom,
-            'address': user.address,
-            'phone': user.phone,
-            'username': user.username,
-            # 'direction': user.direction,
-            'post': user.post,
-            'image': image_url,
-            'access': str(refresh.access_token),
-            'refresh_token': str(refresh),  
-        })
+        if not user.first_login :
+            # Si c'est la première connexion, rediriger vers l'API de changement de mot de passe
+            return Response({
+                'message': 'Première connexion. Veuillez changer votre mot de passe.',
+                'status': status.HTTP_200_OK,
+                'change_password': True,
+            })
+        else:
+            return Response({
+                'message': 'login success',
+                'status': status.HTTP_200_OK, 
+                'id': user.id,
+                'role': user.role,
+                'email': user.email,
+                'nom': user.nom,
+                'prenom': user.prenom,
+                'address': user.address,
+                'phone': user.phone,
+                'username': user.username,
+                # 'direction': user.direction,
+                'post': user.post,
+                'image': image_url,
+                'access': str(refresh.access_token),
+                'refresh_token': str(refresh),  
+            })
 
 #----------------- Register ---------
 class RegisterAPI(TokenObtainPairView):

@@ -4,7 +4,9 @@ urlpatterns = [
     ####----------login---------------#####
     path('login/', MytokenManager.as_view(), name='token_obtain_pair'),
     ####---------register-------------#####
-    path('register/', RegisterAPI.as_view(), name='user-registerGirant'),
+    path('register/', RegisterAPI.as_view(), name='user-register'),
+    ###--------change password ---------
+    path('change-password/', ChangePasswordView.as_view(), name='user-register'),
     ####---------register Agent-------------#####
     path('register-agent/', AgentRegisterAPI.as_view(), name='user-registerAgent'),
 

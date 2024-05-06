@@ -35,6 +35,7 @@ class UserAub(AbstractBaseUser,PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
     is_blocked = models.BooleanField(default=False)
     number_attempt= models.IntegerField(default=0)
+    first_login = models.BooleanField(default=True)  # Variable pour suivre la première connexion
     objects = UserManager()
 
     USERNAME_FIELD = 'username'

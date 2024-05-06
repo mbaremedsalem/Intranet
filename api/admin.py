@@ -10,13 +10,13 @@ admin.site.site_header = "Intranet"
 
 class UserAdminConfig(admin.ModelAdmin):
     model = UserAub
-    search_fields = ('email','nom', 'phone','prenom','post','image','username')
-    list_filter = ('email', 'nom', 'phone','post','image','is_active', 'is_staff','username')
+    search_fields = ('email','nom', 'phone','prenom','post','image','username','first_login')
+    list_filter = ('email', 'nom', 'phone','post','image','is_active', 'is_staff','username','first_login')
     ordering = ('nom',)  # Update the ordering field here
-    list_display = ('phone','email', 'nom', 'post','image','prenom','username','role','is_superuser',
+    list_display = ('phone','email', 'nom', 'post','image','prenom','username','first_login','role','is_superuser',
                     'is_active', 'is_staff', 'is_blocked', 'password',)
     fieldsets = (
-        (None, {'fields': ('email', 'nom','post','image','prenom','username','phone','role',)}),
+        (None, {'fields': ('email', 'nom','post','image','prenom','username','first_login','phone','role',)}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_blocked')}),
     )
 
@@ -45,20 +45,20 @@ class AdminResource(resources.ModelResource):
 class UserAdmin(ImportExportModelAdmin):
     model = Admin
     resource_class = AdminResource
-    search_fields = ('email', 'nom','post','phone','prenom','direction','username')
-    list_filter = ('email', 'nom', 'post','phone','direction' ,'is_active', 'is_staff')
+    search_fields = ('email', 'nom','post','phone','prenom','direction','username','first_login')
+    list_filter = ('email', 'nom', 'post','phone','direction' ,'is_active', 'is_staff','first_login')
     ordering = ('nom',)  # Update the ordering field here
-    list_display = ('phone','prenom','post','email','direction','username','nom','is_superuser',
+    list_display = ('phone','prenom','post','email','direction','username','nom','is_superuser','first_login',
                     'is_active', 'is_staff', 'is_blocked', 'password',)
     fieldsets = (
-        (None, {'fields': ('email', 'nom','post','direction','username','phone','image','role','prenom')}),
+        (None, {'fields': ('email', 'nom','post','direction','username','phone','first_login','image','role','prenom')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_blocked')}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'nom','direction' ,'post','prenom','username','phone','is_active', 'is_staff', 'is_blocked')
+            'fields': ('email', 'nom','direction' ,'post','prenom','username','phone','first_login','is_active', 'is_staff', 'is_blocked')
             }
          ),
     )  
@@ -72,20 +72,20 @@ class UserAdmin(ImportExportModelAdmin):
 
 class UserAgent(admin.ModelAdmin):
     model = Agent
-    search_fields = ('email', 'nom','post','phone','prenom','direction','username')
-    list_filter = ('email', 'nom', 'post','phone','direction' ,'is_active', 'is_staff')
+    search_fields = ('email', 'nom','post','phone','prenom','direction','username','first_login')
+    list_filter = ('email', 'nom', 'post','phone','direction' ,'is_active', 'is_staff','first_login')
     ordering = ('nom',)  # Update the ordering field here
-    list_display = ('phone','prenom','post','email','direction','username','nom','is_superuser',
+    list_display = ('phone','prenom','post','email','direction','username','nom','is_superuser','first_login',
                     'is_active', 'is_staff', 'is_blocked', 'password',)
     fieldsets = (
-        (None, {'fields': ('email', 'nom','post','direction','username','phone','image','role','prenom')}),
+        (None, {'fields': ('email', 'nom','post','direction','username','phone','first_login','image','role','prenom')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_blocked')}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'nom','direction' ,'post','prenom','username','phone','is_active', 'is_staff', 'is_blocked')
+            'fields': ('email', 'nom','direction' ,'post','prenom','username','phone','first_login','is_active','first_login','is_staff', 'is_blocked')
             }
          ),
     )  
