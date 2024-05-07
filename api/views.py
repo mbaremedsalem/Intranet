@@ -51,6 +51,7 @@ class ChangePasswordView(GenericAPIView):
             })
 
         user.set_password(new_password)
+        user.first_login = True
         user.save()
 
         return Response({
