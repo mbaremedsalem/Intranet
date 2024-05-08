@@ -69,9 +69,20 @@ class UserAdmin(ImportExportModelAdmin):
             obj.password = make_password(obj.password)
         super().save_model(request, obj, form, change)
 
+class AgentResource(resources.ModelResource):
+    class Meta:
+        model = Agent
+        fields = ('email', 'nom', 'prenom', 'post', 'direction', 'phone', 'username', 'password', 'role','is_active', 'is_staff', 'is_blocked')
+        import_id_fields = []  # Ignorer le champ "id" lors de l'importation
 
-class UserAgent(admin.ModelAdmin):
+    def before_export(self, queryset, *args, **kwargs):
+        # Hasher le mot de passe de chaque objet avant l'exportation
+        for obj in queryset:
+            if obj.password:
+                obj.password = make_password(obj.password)
+class UserAgent(ImportExportModelAdmin):
     model = Agent
+    resource_class = AdminResource
     search_fields = ('email', 'nom','post','phone','prenom','direction','username','first_login')
     list_filter = ('email', 'nom', 'post','phone','direction' ,'is_active', 'is_staff','first_login')
     ordering = ('nom',)  # Update the ordering field here
