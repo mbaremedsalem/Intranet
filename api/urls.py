@@ -9,6 +9,8 @@ urlpatterns = [
     path('change-password/', ChangePasswordView.as_view(), name='user-register'),
     ####---------register Agent-------------#####
     path('register-agent/', AgentRegisterAPI.as_view(), name='user-registerAgent'),
+    ####---------Edit Profile-------------#####
+    path('update-profile/', UserAubUpdateView.as_view(), name='user-update'),
 
     #------------ document ----------------- 
     ####----------- create document ---------######

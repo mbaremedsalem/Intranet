@@ -22,6 +22,14 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate
 
 
+class UserAubUpdateView(generics.UpdateAPIView):
+    queryset = UserAub.objects.all()
+    serializer_class = UserAubSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+    
 class ChangePasswordView(GenericAPIView):
     authentication_classes = []  # Aucune authentification requise
     permission_classes = []  # Aucune permission requise
@@ -63,25 +71,24 @@ class ChangePasswordView(GenericAPIView):
 class InvalidInformationException(APIException):
     status_code = 400
     default_detail = 'Informations invalides'
-
 class MytokenManager(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
-    
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             return Response({
-            'message': 'Information invalide',
-            'status':status.HTTP_400_BAD_REQUEST, 
-        })
+                'message': e.detail,
+                'status': status.HTTP_400_BAD_REQUEST,
+            })
 
         user = serializer.validated_data
         refresh = RefreshToken.for_user(user)
         image_url = user.image.url if user.image else None
-        if not user.first_login :
-            # Si c'est la première connexion, rediriger vers l'API de changement de mot de passe
+
+        if not user.first_login:
             return Response({
                 'message': 'Première connexion. Veuillez changer votre mot de passe.',
                 'status': status.HTTP_200_OK,
@@ -89,21 +96,21 @@ class MytokenManager(TokenObtainPairView):
             })
         else:
             return Response({
-                'message': 'login success',
-                'status': status.HTTP_200_OK, 
+                'message': 'Login successful',
+                'status': status.HTTP_200_OK,
                 'id': user.id,
                 'role': user.role,
                 'email': user.email,
                 'nom': user.nom,
                 'prenom': user.prenom,
                 'address': user.address,
+                # 'direction':user.direction.nom,
                 'phone': user.phone,
                 'username': user.username,
-                # 'direction': user.direction,
                 'post': user.post,
                 'image': image_url,
                 'access': str(refresh.access_token),
-                'refresh_token': str(refresh),  
+                'refresh_token': str(refresh),
             })
 
 #----------------- Register ---------
@@ -1065,11 +1072,11 @@ class UsersInDirection(APIView):
 
             # Ajoute les noms et les IDs des agents à la liste
             for agent in agents:
-                user_data.append({'nom': agent.nom, 'id': agent.id})
+                user_data.append({'nom': agent.nom, 'id': agent.id, 'prenom':agent.prenom})
 
             # Ajoute les noms et les IDs des admins à la liste
             for admin in admins:
-                user_data.append({'nom': admin.nom, 'id': admin.id})
+                user_data.append({'nom': admin.nom, 'id': admin.id,'prenom':admin.prenom,})
 
             # Renvoie la liste des noms et des IDs des utilisateurs dans la direction spécifiée
             return Response({'users_in_direction': user_data})

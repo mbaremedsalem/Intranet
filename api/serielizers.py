@@ -1,6 +1,12 @@
 from .models import *
 from rest_framework import serializers 
 from django.contrib.auth import authenticate
+
+class UserAubSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserAub
+        fields = ['nom', 'prenom', 'phone', 'username', 'email', 'address', 'post', 'image', 'role']
+        read_only_fields = ['username']
 #--------------user serializer-------------
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,41 +24,37 @@ class UserAgentSerializer(serializers.ModelSerializer):
 class MyTokenObtainPairSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
-    
+
     def validate(self, data):
-        user = authenticate(**data)
-        if user and user.is_active and not user.is_blocked:
-            user.number_attempt=0
-            user.save()
-            return user
-        
-        elif user and user.is_active and user.is_blocked:
-            # return Response('message')
-            # return Response(serializers.errors)
-            raise serializers.ValidationError({'message':'Compte blocké, veillez contacter l\'daministrateur'})
-        
-        try:
-            obj= UserAub.objects.get(phone=data['username'])
-            print(obj.number_attempt)
-            if obj.number_attempt<5:
-                obj.number_attempt +=1
-                print(obj.number_attempt)
-                obj.save()
-                raise serializers.ValidationError({'message':'Compte blocké, veillez contacter l\'daministrateur.'})
-            else:
-                obj.number_attempt +=1
-                print(obj.number_attempt)
-                obj.is_blocked=True
-                obj.save()
-                raise serializers.ValidationError({'message':'Compte blocké, veillez contacter l\'daministrateur.'})
-        except:
-            raise serializers.ValidationError({'message':'Informations invalides.'}) 
-        
+        username = data.get('username')
+        password = data.get('password')
+        user = authenticate(username=username, password=password)
 
-
-
-
-    
+        if user:
+            if user.is_active and not user.is_blocked:
+                user.number_attempt = 0
+                user.save()
+                return user
+            elif user.is_blocked:
+                print(f"User {username} is blocked")
+                raise serializers.ValidationError({'message': 'Compte bloqué, veuillez contacter l\'administrateur.'})
+        else:
+            try:
+                obj = UserAub.objects.get(username=username)
+                if obj.number_attempt < 5:
+                    obj.number_attempt += 1
+                    obj.save()
+                    print(f"Invalid credentials for {username}")
+                    raise serializers.ValidationError({'message': 'Informations invalides.'})
+                else:
+                    obj.number_attempt += 1
+                    obj.is_blocked = True
+                    obj.save()
+                    print(f"User {username} is now blocked")
+                    raise serializers.ValidationError({'message': 'Compte bloqué, veuillez contacter l\'administrateur.'})
+            except UserAub.DoesNotExist:
+                print(f"User {username} does not exist")
+                raise serializers.ValidationError({'message': 'Informations invalides.'})
 #--------------------Register Agent ----------------------
 class AgentRegisterSerializer(serializers.ModelSerializer):
     class Meta:

@@ -50,7 +50,7 @@ class Direction(models.Model):
     code = models.CharField(max_length=100,null=True)
 
     def __str__(self): 
-        return self.nom     
+        return self.nom 
 
 class Archive(models.Model):
     nom = models.CharField(max_length=100, null=True)

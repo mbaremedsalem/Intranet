@@ -45,20 +45,20 @@ class AdminResource(resources.ModelResource):
 class UserAdmin(ImportExportModelAdmin):
     model = Admin
     resource_class = AdminResource
-    search_fields = ('email', 'nom','post','phone','prenom','direction','username','first_login')
-    list_filter = ('email', 'nom', 'post','phone','direction' ,'is_active', 'is_staff','first_login')
+    search_fields = ('email', 'nom','post','phone','prenom','direction','username','number_attempt','first_login')
+    list_filter = ('email', 'nom', 'post','phone','direction' ,'is_active', 'is_staff','number_attempt','first_login')
     ordering = ('nom',)  # Update the ordering field here
-    list_display = ('phone','prenom','post','email','direction','username','nom','is_superuser','first_login',
+    list_display = ('phone','prenom','post','email','direction','username','number_attempt','nom','is_superuser','first_login',
                     'is_active', 'is_staff', 'is_blocked', 'password',)
     fieldsets = (
-        (None, {'fields': ('email', 'nom','post','direction','username','phone','first_login','image','role','prenom')}),
+        (None, {'fields': ('email', 'nom','post','direction','username','number_attempt','phone','first_login','image','role','prenom')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_blocked')}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'nom','direction' ,'post','prenom','username','phone','first_login','is_active', 'is_staff', 'is_blocked')
+            'fields': ('email', 'nom','direction' ,'post','prenom','username','number_attempt','phone','first_login','is_active', 'is_staff', 'is_blocked')
             }
          ),
     )  
