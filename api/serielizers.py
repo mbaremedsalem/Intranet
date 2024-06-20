@@ -55,6 +55,7 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
             except UserAub.DoesNotExist:
                 print(f"User {username} does not exist")
                 raise serializers.ValidationError({'message': 'Informations invalides.'})
+            
 #--------------------Register Agent ----------------------
 class AgentRegisterSerializer(serializers.ModelSerializer):
     class Meta:
